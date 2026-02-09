@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from routes.reports import reports_bp
+from routes import reports_bp
 from extensions import db
 
 app = Flask(__name__)

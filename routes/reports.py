@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
-import mysql.connector
-from config import db_config, biotime_config
-from datetime import datetime, time, timedelta
+from services.employee_service import get_employees, get_distinct_sub_sections, get_distinct_categories
+from services.attendance_service import get_attendance_for_date
+from datetime import datetime
 from collections import defaultdict
 import io
-from weasyprint import HTML, CSS
+from weasyprint import HTML
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
@@ -19,138 +19,68 @@ def reports_page():
 @reports_bp.route('/api/reports/sub_sections')
 def api_sub_sections():
     """Return distinct sub_section list from employees."""
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cur = conn.cursor()
-        cur.execute("SELECT DISTINCT Sub_Section FROM employees WHERE Sub_Section IS NOT NULL AND Sub_Section <> '' ORDER BY Sub_Section")
-        subs = [r[0] for r in cur.fetchall()]
-        return jsonify(subs)
-    except Exception as e:
-        print('sub_sections error:', e)
-        return jsonify([])
-    finally:
-        try:
-            cur.close(); conn.close()
-        except Exception:
-            pass
+    return jsonify(get_distinct_sub_sections())
 
 
 @reports_bp.route('/api/reports/categories')
 def api_categories():
     """Return distinct category list from employees."""
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cur = conn.cursor()
-        cur.execute("SELECT DISTINCT Category FROM employees WHERE Category IS NOT NULL AND Category <> '' ORDER BY Category")
-        categories = [r[0] for r in cur.fetchall()]
-        return jsonify(categories)
-    except Exception as e:
-        print('categories error:', e)
-        return jsonify([])
-    finally:
-        try:
-            cur.close(); conn.close()
-        except Exception:
-            pass
+    return jsonify(get_distinct_categories())
 
 
 def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str | None):
     """Compute payment sheet rows for a given date and optional sub_section.
     
-    Uses employee data from mfl_weekend_duty.employees and 
-    attendance logs from bio_time.iclock_transaction.
+    Uses employee data from employee_service and 
+    attendance logs from attendance_service.
     """
-    conn = mysql.connector.connect(**db_config)
-    cur = conn.cursor(dictionary=True)
-    try:
-        # Load employees
-        params = []
-        conditions = []
-        if sub_section:
-            conditions.append('Sub_Section = %s')
-            params.append(sub_section)
-        if category:
-            conditions.append('Category = %s')
-            params.append(category)
-        where = f"WHERE {' AND '.join(conditions)}" if conditions else ''
+    # 1. Fetch Employees
+    employees = get_employees(sub_section, category)
+    if not employees:
+        return []
+
+    # 2. Fetch Attendance
+    # We can optimize by passing IDs, or just fetch all for the day if the list is huge.
+    # Given the implementation, passing IDs is safer for filtering.
+    emp_ids = [str(e['Emp_Id']) for e in employees]
+    attendance_data = get_attendance_for_date(for_date, emp_ids)
+
+    rows = []
+    serial = 1
+    
+    for emp in employees:
+        emp_id = str(emp['Emp_Id'])
+        stats = attendance_data.get(emp_id)
         
-        # Payment rate calculation: (Gross Salary / 30) for daily rate
-        cur.execute(
-            f"""
-            SELECT Emp_Id, Emp_Name, Designation, Sub_Section, Category, Grade,
-                   ROUND(Gross_Salary, 0) AS Gross_Salary,
-                   ROUND(Gross_Salary / 30, 2) AS Daily_Rate
-            FROM employees
-            {where}
-            ORDER BY Emp_Id
-            """,
-            params
-        )
-        employees = cur.fetchall()
-        id_to_emp = {str(e['Emp_Id']): e for e in employees}
-        if not employees:
-            return []
+        if not stats or not stats['in_time'] or not stats['out_time']:
+            continue # Skip if no complete attendance recorded for this day
 
-        # Fetch attendance for selected date from bio_time database
-        id_list = list(id_to_emp.keys())
-        placeholders = ','.join(['%s'] * len(id_list))
+        in_dt = stats['in_time']
+        out_dt = stats['out_time']
         
-        att_query = f"""
-        SELECT emp_code, punch_time
-        FROM bio_time.iclock_transaction
-        WHERE DATE(punch_time) = %s
-        AND emp_code IN ({placeholders})
-        ORDER BY emp_code, punch_time
-        """
+        # Duration Calculation
+        duration = out_dt - in_dt
+        work_hours = duration.total_seconds() / 3600.0
         
-        cur.execute(att_query, [for_date] + id_list)
-        att_rows = cur.fetchall()
+        # Payment Logic: Fixed 1 day pay if present
+        amount = round(float(emp['Daily_Rate']), 0)
 
-        # Group times per employee
-        times_by_emp = defaultdict(list)
-        for r in att_rows:
-            times_by_emp[str(r['emp_code'])].append(r['punch_time'])
+        rows.append({
+            'sl': serial,
+            'id': emp_id,
+            'name': emp['Emp_Name'],
+            'designation': emp['Designation'],
+            'sub_section': emp['Sub_Section'],
+            'gross': float(emp['Gross_Salary']),
+            'in_time': in_dt.strftime('%H:%M:%S'),
+            'out_time': out_dt.strftime('%H:%M:%S'),
+            'hour': round(work_hours, 2),
+            'amount': amount,
+            'signature': ''
+        })
+        serial += 1
 
-        rows = []
-        serial = 1
-        
-        for emp_id, emp in id_to_emp.items():
-            punches = sorted(times_by_emp.get(emp_id, []))
-            
-            if not punches:
-                continue # Skip if no attendance recorded for this day
-
-            in_dt = punches[0]
-            out_dt = punches[-1]
-            
-            # Duration Calculation
-            duration = out_dt - in_dt
-            work_hours = duration.total_seconds() / 3600.0
-            
-            # Payment Logic: Fixed 1 day pay if present
-            amount = round(float(emp['Daily_Rate']), 0)
-
-            rows.append({
-                'sl': serial,
-                'id': emp_id,
-                'name': emp['Emp_Name'],
-                'designation': emp['Designation'],
-                'sub_section': emp['Sub_Section'],
-                'gross': float(emp['Gross_Salary']),
-                'in_time': in_dt.strftime('%H:%M:%S'),
-                'out_time': out_dt.strftime('%H:%M:%S'),
-                'hour': round(work_hours, 2),
-                'amount': amount,
-                'signature': ''
-            })
-            serial += 1
-
-        return rows
-    finally:
-        try:
-            cur.close(); conn.close()
-        except Exception:
-            pass
+    return rows
 
 
 @reports_bp.route('/api/reports/payment_sheet', methods=['POST'])

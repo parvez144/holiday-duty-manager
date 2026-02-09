@@ -1,7 +1,11 @@
 from flask import Flask, render_template
 from routes.reports import reports_bp
+from extensions import db
 
 app = Flask(__name__)
+app.config.from_pyfile('config.py')
+
+db.init_app(app)
 
 # Register blueprints
 app.register_blueprint(reports_bp)

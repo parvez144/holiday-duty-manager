@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Sheet - {{ for_date }}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 16pt;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            font-size: 9pt;
+        }
+
+        .section-header {
+            background: #e9ecef;
+            font-weight: bold;
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+        }
+
+        .footer {
+            margin-top: 50px;
+            width: 100%;
+        }
+
+        .signature-box {
+            float: left;
+            width: 200px;
+            border-top: 1px solid #000;
+            text-align: center;
+            margin-right: 50px;
+            padding-top: 5px;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Holiday Duty Payment Sheet</h1>
+        <p>Date: {{ for_date }} | Printed On: {{ datetime.now().strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+
+    {% for section, rows in grouped_rows.items() %}
+    <div class="section-header">Section: {{ section }}</div>
+    <table>
+        <thead>
+            <tr>
+                <th width="30">SL</th>
+                <th width="60">ID</th>
+                <th>Name</th>
+                <th>Designation</th>
+                <th width="70">In Time</th>
+                <th width="70">Out Time</th>
+                <th width="50">Amount</th>
+                <th width="100">Signature</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>{{ r.sl }}</td>
+                <td>{{ r.id }}</td>
+                <td>{{ r.name }}</td>
+                <td>{{ r.designation }}</td>
+                <td>{{ r.in_time }}</td>
+                <td>{{ r.out_time }}</td>
+                <td align="right">{{ r.amount }}</td>
+                <td></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+    <div class="footer">
+        <div class="signature-box">Prepared By</div>
+        <div class="signature-box">Checked By</div>
+        <div class="signature-box" style="float:right; margin-right:0;">Approved By</div>
+    </div>
+</body>
+
+</html>

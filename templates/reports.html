@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holiday Duty Manager - Reports</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent: #10b981;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100-vh;
+            padding-top: 50px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; flex: 2; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        
+        .btn-outline { 
+            background: transparent; 
+            border: 1px solid var(--border); 
+            color: var(--text); 
+            flex: 1;
+        }
+        .btn-outline:hover { background: var(--border); }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.4);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9375rem;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Holiday Duty Manager</h1>
+        <p class="subtitle">Generate payment sheets and attendance reports by syncing multiple schemas.</p>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="date-select">Target Date</label>
+                <input type="date" id="date-select" value="2021-10-02">
+            </div>
+            <div class="control-group">
+                <label for="section-select">Sub-Section</label>
+                <select id="section-select">
+                    <option value="">All Sections</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="category-select">Category</label>
+                <select id="category-select">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button id="btn-fetch" class="btn-primary">
+                    <div class="spinner" id="fetch-spinner"></div>
+                    Generate Report
+                </button>
+                <button id="btn-pdf" class="btn-outline">PDF</button>
+                <button id="btn-excel" class="btn-outline">Excel</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="report-table">
+                <thead>
+                    <tr>
+                        <th>SL</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Section</th>
+                        <th>In Time</th>
+                        <th>Out Time</th>
+                        <th>Duration</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body">
+                    <tr>
+                        <td colspan="8" class="empty-state">Select filters and generate report to see data.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const dateEl = document.getElementById('date-select');
+        const sectionEl = document.getElementById('section-select');
+        const catEl = document.getElementById('category-select');
+        const searchBtn = document.getElementById('btn-fetch');
+        const tableBody = document.getElementById('report-body');
+        const fetchSpinner = document.getElementById('fetch-spinner');
+
+        async function loadFilters() {
+            try {
+                const [sections, categories] = await Promise.all([
+                    fetch('/api/reports/sub_sections').then(r => r.json()),
+                    fetch('/api/reports/categories').then(r => r.json())
+                ]);
+
+                sections.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    sectionEl.appendChild(opt);
+                });
+
+                categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    catEl.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Failed to load filters", err);
+            }
+        }
+
+        async function generateReport() {
+            const date = dateEl.value;
+            if (!date) return alert("Please select a date");
+
+            searchBtn.disabled = true;
+            fetchSpinner.style.display = 'block';
+            tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading data...</td></tr>';
+
+            try {
+                const res = await fetch('/api/reports/payment_sheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: date,
+                        sub_section: sectionEl.value,
+                        category: catEl.value
+                    })
+                });
+
+                const data = await res.json();
+                
+                if (data.rows && data.rows.length > 0) {
+                    tableBody.innerHTML = data.rows.map(row => `
+                        <tr>
+                            <td>${row.sl}</td>
+                            <td>${row.id}</td>
+                            <td>${row.name}</td>
+                            <td>${row.sub_section}</td>
+                            <td>${row.in_time}</td>
+                            <td>${row.out_time}</td>
+                            <td>${row.hour} hrs</td>
+                            <td>${row.amount}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No attendance found for this day.</td></tr>';
+                }
+            } catch (err) {
+                alert("Error fetching report data");
+                tableBody.innerHTML = '<tr><td colspan="8" class="empty-state" style="color:#ef4444">Failed to load data.</td></tr>';
+            } finally {
+                searchBtn.disabled = false;
+                fetchSpinner.style.display = 'none';
+            }
+        }
+
+        function downloadReport(type) {
+            const date = dateEl.value;
+            if (!date) return alert("Please select a date");
+
+            const payload = {
+                date: date,
+                sub_section: sectionEl.value,
+                category: catEl.value
+            };
+
+            fetch(`/reports/payment_sheet/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payment_sheet_${date}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
+                document.body.append(a);
+                a.click();
+                a.remove();
+            })
+            .catch(err => alert(`Error downloading ${type}`));
+        }
+
+        searchBtn.addEventListener('click', generateReport);
+        document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
+        document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));
+        
+        window.addEventListener('load', loadFilters);
+    </script>
+</body>
+</html>

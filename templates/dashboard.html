@@ -232,10 +232,10 @@
         <header>
             <div class="logo">
                 <i class="fas fa-calendar-check"></i>
-                <span>HDM Dashboard</span>
+                <span>MFL Holiday Duty Manager</span>
             </div>
             <div class="user-profile">
-                <span>Welcome back, Admin</span>
+                <span>Welcome back, spk</span>
                 <i class="fas fa-circle-user fa-lg"></i>
             </div>
         </header>
@@ -309,8 +309,94 @@
             </div>
         </div>
 
-        <footer>
-            &copy; 2024 Holiday Duty Manager. Built for efficiency.
+        <style>
+            .app-footer {
+                margin-top: auto;
+                padding: 2.5rem 0;
+                border-top: 1px solid var(--border);
+                background: rgba(15, 23, 42, 0.4);
+                backdrop-filter: blur(8px);
+                border-radius: 1.5rem 1.5rem 0 0;
+                position: relative;
+                z-index: 10;
+            }
+
+            .footer-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .copyright {
+                color: var(--text-muted);
+                font-size: 0.9375rem;
+            }
+
+            .copyright strong {
+                color: var(--primary-light);
+                font-weight: 600;
+            }
+
+            .developer-info {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                font-size: 0.875rem;
+                color: var(--text-muted);
+            }
+
+            .developer-info a {
+                color: var(--text);
+                text-decoration: none;
+                font-weight: 600;
+                border-bottom: 2px solid var(--primary-light);
+                transition: all 0.2s;
+            }
+
+            .developer-info a:hover {
+                background: var(--primary-light);
+                color: var(--bg);
+            }
+
+            .version-badge {
+                padding: 0.25rem 0.5rem;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid var(--border);
+                border-radius: 0.5rem;
+                font-family: monospace;
+                font-weight: 600;
+                color: var(--primary-light);
+            }
+
+            @media print {
+                .no-print {
+                    display: none;
+                }
+            }
+
+            @media (min-width: 768px) {
+                .footer-content {
+                    flex-direction: row;
+                    justify-content: space-between;
+                    padding: 0 2rem;
+                }
+            }
+        </style>
+
+        <footer class="app-footer no-print">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
+                    }}-{% endif %}{{ system.copyright.year }}
+                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                </div>
+                <div class="developer-info">
+                    {{ system.developer.text }}
+                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name}}</a>
+                </div>
+            </div>
         </footer>
     </div>
 </body>

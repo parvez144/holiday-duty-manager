@@ -1,0 +1,74 @@
+/* To show a beautiful border on the table */
+:root{
+    --bg: #1E1E1E;
+    --surface: #252525;
+    --text: #E6E6E6;
+    --muted: #9CA3AF;
+    --border: #2A2A2A;
+}
+table.dataTable {
+    border: 1px solid var(--border);
+}
+table.dataTable th, table.dataTable td {
+    border: 1px solid var(--border);
+    padding: 8px;
+}
+
+/* DataTable button location */
+.dt-buttons {
+    margin-bottom: 15px;
+}
+
+/* Custom button style */
+.dt-button.btn-success {
+    background-color: #198754;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+.dt-button.btn-success:hover {
+    background-color: #157347;
+}
+
+/* Global dark theme */
+body {
+    background-color: var(--bg);
+    color: var(--text);
+}
+
+/* Cards and containers */
+.card, .card-body, .card-header {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+/* Tables */
+table, th, td {
+    background-color: transparent;
+    color: inherit;
+}
+table.table {
+    color: inherit;
+}
+table.dataTable thead th {
+    background-color: var(--surface);
+    color: var(--text);
+}
+table.dataTable tbody tr:nth-child(even) {
+    background-color: rgba(255,255,255,0.02);
+}
+
+/* Bootstrap overrides for readability on dark bg */
+.form-control, .form-select {
+    background-color: #1a1a1a;
+    color: var(--text);
+    border-color: var(--border);
+}
+.form-control::placeholder {
+    color: var(--muted);
+}
+.btn-primary, .btn-success, .btn-warning, .btn-danger {
+    color: #fff;
+}

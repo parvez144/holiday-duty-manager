@@ -16,7 +16,8 @@ system_info = {
         'start_year': 2026,
         'year': datetime.now().year,
         'holder': 'SPK',
-        'text': f'All rights reserved.'
+        'text': f'All rights reserved.',
+        'version': '1.0.0',
     },
     'company': {
         'name': COMPANY_NAME,

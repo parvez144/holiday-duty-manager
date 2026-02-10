@@ -11,21 +11,51 @@
             color: #333;
             margin: 0;
             padding: 0;
+
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
         }
 
-        .header h1 {
+        .company-logo {
+            width: 80px;
+            height: 60px;
+            margin: 0 auto 10px;
+            float: left;
+        }
+
+        .company-name {
             margin: 0;
-            font-size: 16pt;
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .header p {
-            margin: 5px 0;
+        .company-address {
+            margin: 5px 0 15px;
+            font-size: 12pt;
             color: #666;
+        }
+
+        .report-title {
+            margin: 10px 0 5px;
+            font-size: 14pt;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .report-date {
+            text-align: right;
+            margin: 10px 0 20px;
+            font-size: 9pt;
+            color: #666;
+            font-weight: bold;
         }
 
         table {
@@ -58,6 +88,8 @@
         .footer {
             margin-top: 50px;
             width: 100%;
+            position: fixed;
+            bottom: 0;
         }
 
         .signature-box {
@@ -78,8 +110,11 @@
 
 <body>
     <div class="header">
-        <h1>Holiday Duty Payment Sheet</h1>
-        <p>Date: {{ for_date }} | Printed On: {{ datetime.now().strftime('%Y-%m-%d %H:%M') }}</p>
+        <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Company Logo" class="company-logo">
+        <div class="company-name">{{ system.company.name }}</div>
+        <div class="company-address">{{ system.company.address }}</div>
+        <div class="report-title">Holiday Duty Payment Sheet</div>
+        <div class="report-date">Date: {{ for_date }}</div>
     </div>
 
     {% for section, rows in grouped_rows.items() %}

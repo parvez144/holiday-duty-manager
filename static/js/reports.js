@@ -60,7 +60,7 @@ async function generateReport() {
                     <td>${row.sub_section}</td>
                     <td>${row.in_time}</td>
                     <td>${row.out_time}</td>
-                    <td>${row.amount}</td>
+                    <td>${row.hour} hrs</td>
                 </tr>
             `).join('');
         } else {

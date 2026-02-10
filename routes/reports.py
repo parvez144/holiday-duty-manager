@@ -90,7 +90,10 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
         # Duration Calculation based on effective times
         duration = eff_out - eff_in
         raw_hours = duration.total_seconds() / 3600.0
-        work_hours = max(0, raw_hours - 1.0) # Deduct 1 hour for lunch
+        
+        # Deduct 1 hour for lunch ONLY if working 6 hours or more
+        deduction = 1.0 if raw_hours >= 6.0 else 0.0
+        work_hours = max(0, raw_hours - deduction)
         
         # Salary calculations
         gross_salary = float(emp.get('Gross_Salary') or 0)
@@ -101,7 +104,8 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
 
         category = (emp.get('Category') or '').strip().lower()
         
-        if category == 'worker':
+        # Robust check to match 'worker', 'workers', 'factory worker' etc.
+        if 'worker' in category:
             # Workers: Entire duration as OT
             ot_hours = work_hours
             ot_rate = ot_rate_unit
@@ -111,6 +115,12 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             ot_hours = 0
             ot_rate = ot_rate_unit
             amount = daily_basic
+
+        # Force 0 amount if any punch is missing/invalid
+        if 'Missing' in disp_in or 'Missing' in disp_out:
+            amount = 0
+            ot_hours = 0
+            work_hours = 0
 
         rows.append({
             'sl': serial,

@@ -22,7 +22,7 @@ system_info = {
         'name': COMPANY_NAME,
         'address': 'Gazipur, Bangladesh',
         'url': 'https://manelfashion.net',
-        'logo': 'building-user'
+        'logo': 'img/logo.png'
     }
 }
 

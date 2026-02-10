@@ -130,52 +130,85 @@
         }
 
         .card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-10px) scale(1.02);
             border-color: var(--primary-light);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
+            background: rgba(30, 41, 59, 0.9);
         }
 
         .card:hover::before {
             transform: translateX(100%);
         }
 
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .hero h1 {
+            animation: float 4s ease-in-out infinite;
+        }
+
         .card-icon {
-            width: 60px;
-            height: 60px;
+            width: 65px;
+            height: 65px;
             background: rgba(99, 102, 241, 0.1);
             border-radius: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             color: var(--primary-light);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid transparent;
+        }
+
+        .card:hover .card-icon {
+            background: var(--primary);
+            color: white;
+            transform: rotate(10deg) scale(1.1);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .card-content h3 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
         .card-content p {
             color: var(--text-muted);
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 0.95rem;
         }
 
         .card-footer {
             margin-top: auto;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             font-weight: 600;
             color: var(--primary-light);
+            font-size: 0.9rem;
+            letter-spacing: 0.02em;
         }
 
         .card-footer i {
-            transition: transform 0.3s;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card:hover .card-footer i {
-            transform: translateX(5px);
+            transform: translateX(10px);
         }
 
         .stats-row {
@@ -273,7 +306,7 @@
                 <div class="card-footer">
                     Check Present Status <i class="fas fa-arrow-right"></i>
                 </div>
-            </div>
+            </a>
 
             <!-- <div class="card" style="cursor: not-allowed; opacity: 0.8;">
                 <div class="card-icon" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">
@@ -289,25 +322,6 @@
                 </div>
             </div> -->
         </div>
-
-        <!-- <div class="stats-row">
-            <div class="stat-item">
-                <span class="stat-value">1,500+</span>
-                <span class="stat-label">Active Employees</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">49</span>
-                <span class="stat-label">Managed Sections</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">2</span>
-                <span class="stat-label">Active Schemas</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-value">Sync OK</span>
-                <span class="stat-label">System Health</span>
-            </div>
-        </div> -->
 
         <style>
             .app-footer {

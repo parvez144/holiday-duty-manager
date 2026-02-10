@@ -54,3 +54,11 @@ def get_distinct_categories():
     """Returns a list of distinct categories."""
     results = db.session.query(distinct(Employee.Category)).filter(Employee.Category != None, Employee.Category != '').order_by(Employee.Category).all()
     return [r[0] for r in results]
+
+def get_employee_count():
+    """Returns the total number of employees."""
+    return Employee.query.count()
+
+def get_section_count():
+    """Returns the count of distinct sub-sections."""
+    return db.session.query(distinct(Employee.Sub_Section)).filter(Employee.Sub_Section != None, Employee.Sub_Section != '').count()

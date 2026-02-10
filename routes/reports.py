@@ -63,8 +63,23 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
         duration = out_dt - in_dt
         work_hours = duration.total_seconds() / 3600.0
         
-        # Payment Logic: Fixed 1 day pay if present
-        amount = round(float(emp['Daily_Rate']), 0)
+        # Salary calculations
+        gross_salary = float(emp['Gross_Salary'])
+        # Basic = (Gross - allowances)/1.5
+        basic_salary = (gross_salary-2450)/1.5
+        
+        # OT calculation: assuming standard 8 hours, anything beyond is OT
+        standard_hours = 8.0
+        ot_hours = max(0, work_hours - standard_hours)
+        
+        # OT Rate calculation: (Basic / 208) * 2
+        # 208 = standard monthly working hours (26 days * 8 hours)
+        ot_rate = (basic_salary / 208.0) * 2.0 if ot_hours > 0 else 0
+        
+        # Payment Logic: Basic daily rate + OT amount
+        daily_basic = basic_salary / 26.0  # Assuming 26 working days per month
+        ot_amount = ot_hours * ot_rate
+        amount = daily_basic + ot_amount
 
         rows.append({
             'sl': serial,
@@ -72,11 +87,14 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             'name': emp['Emp_Name'],
             'designation': emp['Designation'],
             'sub_section': emp['Sub_Section'],
-            'gross': float(emp['Gross_Salary']),
+            'gross': gross_salary,
+            'basic': basic_salary,
             'in_time': in_dt.strftime('%H:%M:%S'),
             'out_time': out_dt.strftime('%H:%M:%S'),
             'hour': round(work_hours, 2),
-            'amount': amount,
+            'ot': ot_hours,
+            'ot_rate': ot_rate,
+            'amount': round(amount, 0),
             'signature': ''
         })
         serial += 1

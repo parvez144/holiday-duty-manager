@@ -1,158 +1,322 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <meta charset="UTF-8">
-    <title>Payment Sheet - {{ for_date }}</title>
+    <title>Payment Sheet - {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%B-%Y') }}</title>
     <style>
+        /* ==================================
+           PAGE SETUP & WEASYPRINT EXTENSIONS
+           ================================== */
+        @page {
+            size: A4 portrait;
+            margin: 0.25in;
+            margin-top: 0.4in;
+            margin-bottom: 1.0in; /*space between footer and bottom of page*/
+
+            /* WeasyPrint: footer content each page */
+            @bottom-center {
+                content: element(footer);
+                width: 100%;
+                font-size: 8pt;
+                margin-bottom: 0.1in;
+            }
+
+            /* WeasyPrint: automatic page numbering */
+            @top-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                font-weight: bold;
+                padding-top: 0.1in;
+                padding-right: 0.4in;
+            }
+        }
+
         body {
-            font-family: sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 10pt;
-            color: #333;
             margin: 0;
             padding: 0;
-
         }
 
+        /* ===========
+           HEADER
+           =========== */
         .header {
             text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #333;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
         }
 
-        .company-logo {
-            width: 80px;
-            height: 60px;
-            margin: 0 auto 10px;
-            float: left;
-        }
-
-        .company-name {
-            margin: 0;
-            font-size: 18pt;
-            font-weight: bold;
-            color: #1a1a1a;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .company-address {
-            margin: 5px 0 15px;
-            font-size: 12pt;
-            color: #666;
-        }
-
-        .report-title {
-            margin: 10px 0 5px;
+        .header h1 {
             font-size: 14pt;
+            margin: 0;
             font-weight: bold;
-            color: #333;
         }
 
-        .report-date {
-            text-align: right;
-            margin: 10px 0 20px;
+        .header p {
             font-size: 9pt;
-            color: #666;
-            font-weight: bold;
+            margin: 0;
         }
 
+        .header-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 4px 0 8px 0;
+        }
+
+        /* ===========
+           SUB HEADER
+           =========== */
+        .sub-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 3px;
+        }
+
+        .sub-header-left {
+            text-decoration: none;
+        }
+
+        /* ===========
+           TABLE
+           =========== */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            table-layout: fixed;
+            margin-bottom: 6px;
+        }
+
+        /* WeasyPrint: table header each page */
+        thead {
+            display: table-header-group;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 3px 4px;
+            line-height: 1.2;
+            height: 0.4in;
+            vertical-align: top;
+            font-size: 8pt;
+            vertical-align: middle;
+            word-wrap: break-word;
         }
 
         th {
             background: #f0f0f0;
-            border: 1px solid #ccc;
-            padding: 8px;
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 8.5pt;
+            text-align: center;
+            height: 10px;
         }
 
-        td {
-            border: 1px solid #ccc;
-            padding: 6px 8px;
-            font-size: 9pt;
+        .center {
+            text-align: center;
         }
 
-        .section-header {
-            background: #e9ecef;
+        .right {
+            text-align: right;
+        }
+
+        /* Column Widths */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 4%;
+        }
+
+        /* SI */
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 6%;
+        }
+
+        /* ID */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 18%;
+        }
+
+        /* Name */
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 16%;
+        }
+
+        /* Designation */
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 6%;
+        }
+
+        /* Gross */
+        th:nth-child(6),
+        td:nth-child(6) {
+            width: 6%;
+        }
+
+        /* Basic */
+        th:nth-child(7),
+        td:nth-child(7) {
+            width: 5%;
+        }
+
+        /* OT Hour */
+        th:nth-child(8),
+        td:nth-child(8) {
+            width: 5%;
+        }
+
+        /* OT Rate */
+        th:nth-child(9),
+        td:nth-child(9) {
+            width: 7%;
+        }
+
+        /* Amount */
+        th:nth-child(10),
+        td:nth-child(10) {
+            width: auto;
+        }
+
+        /* Signature */
+
+        /* ===========
+           SUBTOTAL ROW
+           =========== */
+        .sub-total-row td {
+            border-top: none;
+            font-size: 8pt;
             font-weight: bold;
-            padding: 5px 10px;
-            border: 1px solid #ccc;
+            height: 24px;
+            line-height: normal;
+            vertical-align: middle;
+        }
+
+        .sub-total-row .total-count {
+            text-align: left;
+        }
+
+        .sub-total-row .total-amount {
+            text-align: right;
+        }
+
+        /* ===========
+           FOOTER (SIGNATURES)
+           =========== */
+        #footer {
+            position: running(footer);
         }
 
         .footer {
-            margin-top: 50px;
             width: 100%;
-            position: fixed;
-            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            text-align: center;
+            padding: 10px 0 0 0;
+            box-sizing: border-box;
         }
 
-        .signature-box {
-            float: left;
-            width: 200px;
+        .footer-item {
+            width: 15%;
             border-top: 1px solid #000;
-            text-align: center;
-            margin-right: 50px;
             padding-top: 5px;
         }
 
-        @page {
-            size: A4;
-            margin: 1cm;
+        .page-content {
+            margin-bottom: 0.5in;
+        }
+
+        /* Page break between sections */
+        .section {
+            page-break-after: always;
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Company Logo" class="company-logo">
-        <div class="company-name">{{ system.company.name }}</div>
-        <div class="company-address">{{ system.company.address }}</div>
-        <div class="report-title">Holiday Duty Payment Sheet</div>
-        <div class="report-date">Date: {{ for_date }}</div>
+    <!-- footer first define -->
+    <div id="footer">
+        <div class="footer">
+            <div class="footer-item">Prepared By<br>(Payroll & IT)</div>
+            <div class="footer-item">Accounts Officer</div>
+            <div class="footer-item">Sr. Accounts Officer</div>
+            <div class="footer-item">HR Department</div>
+            <div class="footer-item">General Manager</div>
+            <div class="footer-item">F. Director</div>
+        </div>
     </div>
 
-    {% for section, rows in grouped_rows.items() %}
-    <div class="section-header">Section: {{ section }}</div>
-    <table>
-        <thead>
-            <tr>
-                <th width="30">SL</th>
-                <th width="60">ID</th>
-                <th>Name</th>
-                <th>Designation</th>
-                <th width="70">In Time</th>
-                <th width="70">Out Time</th>
-                <th width="50">Amount</th>
-                <th width="100">Signature</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in rows %}
-            <tr>
-                <td>{{ r.sl }}</td>
-                <td>{{ r.id }}</td>
-                <td>{{ r.name }}</td>
-                <td>{{ r.designation }}</td>
-                <td>{{ r.in_time }}</td>
-                <td>{{ r.out_time }}</td>
-                <td align="right">{{ r.amount }}</td>
-                <td></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endfor %}
+    <div class="header">
+        <h1>{{ system.company.name|upper }}</h1>
+        <p>{{ system.company.address }}</p>
+        <div class="header-title">
+            Holiday Duty Payment Sheet
+            <br>
+            <p style="font-size: 10pt;">For the date of {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%d %B %Y')
+                }}
+            </p>
+        </div>
+    </div>
 
-    <div class="footer">
-        <div class="signature-box">Prepared By</div>
-        <div class="signature-box">Checked By</div>
-        <div class="signature-box" style="float:right; margin-right:0;">Approved By</div>
+    <div class="page-content">
+        {% for sub_section_name, rows in grouped_rows.items() %}
+        {% set total_employees = rows|length %}
+        {% set total_amount = rows|map(attribute='amount')|sum %}
+
+        <div class="sub-header">
+            <span class="sub-header-left">Section: {{ sub_section_name }}</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>SI</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Gross</th>
+                    <th>Basic</th>
+                    <th>OT Hour</th>
+                    <th>OT Rate</th>
+                    <th>Amount</th>
+                    <th>Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="center">{{ row.sl }}</td>
+                    <td class="center" style="font-weight: bold;">{{ row.id }}</td>
+                    <td>{{ row.name|title}}</td>
+                    <td>{{ row.designation }}</td>
+                    <td class="right">{{ row.gross|round(0)|int }}</td>
+                    <td class="right">{{ row.basic|round(0)|int }}</td>
+                    <td class="right">{{ row.ot|round(2) }}</td>
+                    <td class="right">{{ row.ot_rate|round(2) }}</td>
+                    <td class="right" style="font-weight: bold;">{{ row.amount|round(0)|int }}</td>
+                    <td class="center">{{ row.signature | default( " ") }}</td>
+                </tr>
+                {% endfor %}
+
+                <tr class="sub-total-row">
+                    <td colspan="8" class="total-count">Sub Total : {{ total_employees }}</td>
+                    <td class="total-amount">{{ total_amount|round(0)|int }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if not loop.last %}
+        <div class="section"></div>
+        {% endif %}
+        {% endfor %}
     </div>
 </body>
 

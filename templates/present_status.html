@@ -12,14 +12,15 @@
             size: A4 portrait;
             margin: 0.25in;
             margin-top: 0.4in;
-            margin-bottom: 1.0in; /*space between footer and bottom of page*/
+            margin-bottom: 1.0in;
+            /*space between footer and bottom of page*/
 
             /* WeasyPrint: footer content each page */
             @bottom-center {
                 content: element(footer);
                 width: 100%;
                 font-size: 8pt;
-                margin-bottom: 0.1in;
+                margin-bottom: 0.01in;
             }
 
             /* WeasyPrint: automatic page numbering */
@@ -101,7 +102,7 @@
             border: 1px solid #000;
             padding: 3px 4px;
             line-height: 1.2;
-            height: 0.4in;
+            height: 0.25in;
             vertical-align: top;
             font-size: 8pt;
             vertical-align: middle;
@@ -227,6 +228,7 @@
             width: 15%;
             border-top: 1px solid #000;
             padding-top: 5px;
+            padding-bottom: 5px;
         }
 
         .page-content {
@@ -265,7 +267,6 @@
     <div class="page-content">
         {% for sub_section_name, rows in grouped_rows.items() %}
         {% set total_employees = rows|length %}
-        {% set total_amount = rows|map(attribute='amount')|sum %}
 
         <div class="sub-header">
             <span class="sub-header-left">Section: {{ sub_section_name }}</span>
@@ -297,7 +298,7 @@
                 {% endfor %}
 
                 <tr class="sub-total-row">
-                    <td colspan="6" class="total-count">Total Present : {{ total_employees }}</td>
+                    <td colspan="7" class="total-count">Total Present : {{ total_employees }}</td>
                 </tr>
             </tbody>
         </table>

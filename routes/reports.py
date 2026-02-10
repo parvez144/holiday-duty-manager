@@ -4,6 +4,7 @@ from services.attendance_service import get_attendance_for_date
 from datetime import datetime
 from collections import defaultdict
 import io
+import json
 from weasyprint import HTML
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -95,8 +96,8 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             'sub_section': emp['Sub_Section'],
             'gross': gross_salary,
             'basic': basic_salary,
-            'in_time': in_dt.strftime('%H:%M:%S'),
-            'out_time': out_dt.strftime('%H:%M:%S'),
+            'in_time': in_dt.strftime('%H:%M'),
+            'out_time': out_dt.strftime('%H:%M'),
             'hour': round(work_hours, 2),
             'ot': ot_hours,
             'ot_rate': ot_rate,
@@ -133,14 +134,27 @@ def _compute_present_status(for_date: str, sub_section: str | None, category: st
         in_dt = stats['in_time']
         out_dt = stats['out_time']
 
+        # In-Time Validation: Missing if >= 1 PM (13:00)
+        if in_dt.hour >= 13:
+            disp_in = "Missing"
+        else:
+            disp_in = in_dt.strftime('%H:%M')
+
+        # Out-Time Validation: Missing if < 2 PM (14:00)
+        # Using >= 14 for "after 2 PM" logic
+        if out_dt and out_dt.hour >= 14:
+            disp_out = out_dt.strftime('%H:%M')
+        else:
+            disp_out = " Missing"
+
         rows.append({
             'sl': serial,
             'id': emp_id,
             'name': emp['Emp_Name'],
             'designation': emp['Designation'],
             'sub_section': emp['Sub_Section'],
-            'in_time': in_dt.strftime('%H:%M:%S'),
-            'out_time': out_dt.strftime('%H:%M:%S') if out_dt else '--:--:--',
+            'in_time': disp_in,
+            'out_time': disp_out,
             'remarks': ''
         })
         serial += 1
@@ -175,7 +189,6 @@ def payment_sheet_pdf():
         # Handle form data
         form_data = request.form.get('data')
         if form_data:
-            import json
             data = json.loads(form_data)
         else:
             data = {}
@@ -231,7 +244,6 @@ def present_status_pdf():
         form_data = request.form.get('data')
         data = json.loads(form_data) if form_data else {}
     
-    import json
     for_date = data.get('date')
     sub_section = data.get('sub_section')
     category = data.get('category')

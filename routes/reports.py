@@ -66,39 +66,51 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
         in_dt = stats['in_time']
         out_dt = stats['out_time']
 
+        # Start Time Rule: Cleaner @ 7:30 AM, Others @ 8:00 AM
+        is_cleaner = (emp.get('Sub_Section') or '').strip().lower() == 'cleaner'
+        start_h, start_m = (7, 30) if is_cleaner else (8, 0)
+        start_limit = in_dt.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
+        eff_in = max(in_dt, start_limit)
+
+        # 30-Minute Rounding Down for Out-Time
+        eff_out = out_dt.replace(minute=(out_dt.minute // 30) * 30, second=0, microsecond=0)
+
         # In-Time Validation: Missing if >= 1 PM (13:00)
-        if in_dt.hour >= 13:
+        if eff_in.hour >= 13:
             disp_in = "Missing"
         else:
-            disp_in = in_dt.strftime('%H:%M')
+            disp_in = eff_in.strftime('%H:%M')
 
         # Out-Time Validation: Missing if < 2 PM (14:00)
-        if out_dt and out_dt.hour >= 14:
-            disp_out = out_dt.strftime('%H:%M')
+        if eff_out and eff_out.hour >= 14:
+            disp_out = eff_out.strftime('%H:%M')
         else:
             disp_out = " Missing"
 
-        # Duration Calculation
-        duration = out_dt - in_dt
-        work_hours = duration.total_seconds() / 3600.0
+        # Duration Calculation based on effective times
+        duration = eff_out - eff_in
+        raw_hours = duration.total_seconds() / 3600.0
+        work_hours = max(0, raw_hours - 1.0) # Deduct 1 hour for lunch
         
         # Salary calculations
-        gross_salary = float(emp['Gross_Salary'])
+        gross_salary = float(emp.get('Gross_Salary') or 0)
         # Basic = (Gross - allowances)/1.5
-        basic_salary = (gross_salary-2450)/1.5
+        basic_salary = (gross_salary - 2450) / 1.5
+        daily_basic = basic_salary / 30.0
+        ot_rate_unit = (basic_salary / 208.0) * 2.0
+
+        category = (emp.get('Category') or '').strip().lower()
         
-        # OT calculation: assuming standard 8 hours, anything beyond is OT
-        standard_hours = 8.0
-        ot_hours = max(0, work_hours - standard_hours)
-        
-        # OT Rate calculation: (Basic / 208) * 2
-        # 208 = standard monthly working hours (26 days * 8 hours)
-        ot_rate = (basic_salary / 208.0) * 2.0 if ot_hours > 0 else 0
-        
-        # Payment Logic: Basic daily rate + OT amount
-        daily_basic = basic_salary / 26.0  # Assuming 26 working days per month
-        ot_amount = ot_hours * ot_rate
-        amount = daily_basic + ot_amount
+        if category == 'worker':
+            # Workers: Entire duration as OT
+            ot_hours = work_hours
+            ot_rate = ot_rate_unit
+            amount = ot_hours * ot_rate
+        else:
+            # Staff and others: One day basic money
+            ot_hours = 0
+            ot_rate = ot_rate_unit
+            amount = daily_basic
 
         rows.append({
             'sl': serial,
@@ -106,13 +118,14 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
             'designation': emp['Designation'].title() if emp['Designation'] else '',
             'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
+            'category': emp.get('Category', ''),
             'gross': gross_salary,
-            'basic': basic_salary,
+            'basic': round(basic_salary, 0),
             'in_time': disp_in,
             'out_time': disp_out,
             'hour': round(work_hours, 2),
-            'ot': ot_hours,
-            'ot_rate': ot_rate,
+            'ot': round(ot_hours, 2),
+            'ot_rate': round(ot_rate, 2),
             'amount': round(amount, 0),
             'remarks': '',
             'signature': ''
@@ -146,16 +159,28 @@ def _compute_present_status(for_date: str, sub_section: str | None, category: st
         in_dt = stats['in_time']
         out_dt = stats['out_time']
 
+        # Start Time Rule: Cleaner @ 7:30 AM, Others @ 8:00 AM
+        is_cleaner = (emp.get('Sub_Section') or '').strip().lower() == 'cleaner'
+        start_h, start_m = (7, 30) if is_cleaner else (8, 0)
+        start_limit = in_dt.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
+        eff_in = max(in_dt, start_limit)
+
+        # 30-Minute Rounding Down for Out-Time
+        if out_dt:
+            eff_out = out_dt.replace(minute=(out_dt.minute // 30) * 30, second=0, microsecond=0)
+        else:
+            eff_out = None
+
         # In-Time Validation: Missing if >= 1 PM (13:00)
-        if in_dt.hour >= 13:
+        if eff_in.hour >= 13:
             disp_in = "Missing"
         else:
-            disp_in = in_dt.strftime('%H:%M')
+            disp_in = eff_in.strftime('%H:%M')
 
         # Out-Time Validation: Missing if < 2 PM (14:00)
         # Using >= 14 for "after 2 PM" logic
-        if out_dt and out_dt.hour >= 14:
-            disp_out = out_dt.strftime('%H:%M')
+        if eff_out and eff_out.hour >= 14:
+            disp_out = eff_out.strftime('%H:%M')
         else:
             disp_out = " Missing"
 

@@ -17,6 +17,12 @@ def reports_page():
     return render_template('reports.html', today=today)
 
 
+@reports_bp.route('/present_status')
+def present_status_page():
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('present_filter.html', today=today)
+
+
 @reports_bp.route('/api/reports/sub_sections')
 def api_sub_sections():
     """Return distinct sub_section list from employees."""
@@ -95,7 +101,47 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             'ot': ot_hours,
             'ot_rate': ot_rate,
             'amount': round(amount, 0),
+            'remarks': '',
             'signature': ''
+        })
+        serial += 1
+
+    return rows
+
+
+def _compute_present_status(for_date: str, sub_section: str | None, category: str | None):
+    """Compute present status rows (attendance only)."""
+    employees = get_employees(sub_section, category)
+    if not employees:
+        return []
+
+    emp_ids = [str(e['Emp_Id']) for e in employees]
+    attendance_data = get_attendance_for_date(for_date, emp_ids)
+
+    rows = []
+    serial = 1
+    
+    for emp in employees:
+        emp_id = str(emp['Emp_Id'])
+        stats = attendance_data.get(emp_id)
+        
+        # In this report, skip only if no IN time? 
+        # Or same logic as payment sheet? Usually present means at least an In time.
+        if not stats or not stats['in_time']:
+            continue
+
+        in_dt = stats['in_time']
+        out_dt = stats['out_time']
+
+        rows.append({
+            'sl': serial,
+            'id': emp_id,
+            'name': emp['Emp_Name'],
+            'designation': emp['Designation'],
+            'sub_section': emp['Sub_Section'],
+            'in_time': in_dt.strftime('%H:%M:%S'),
+            'out_time': out_dt.strftime('%H:%M:%S') if out_dt else '--:--:--',
+            'remarks': ''
         })
         serial += 1
 
@@ -149,6 +195,59 @@ def payment_sheet_pdf():
 
     html_content = render_template(
         'payment_sheet_pdf.html',
+        for_date=for_date,
+        grouped_rows=grouped_rows,
+        datetime=datetime
+    )
+
+    pdf_buffer = io.BytesIO()
+    HTML(string=html_content, base_url=request.url_root).write_pdf(pdf_buffer)
+    pdf_buffer.seek(0)
+
+    return send_file(pdf_buffer, as_attachment=False, mimetype='application/pdf')
+
+
+@reports_bp.route('/api/reports/present_status', methods=['POST'])
+def api_present_status():
+    data = request.get_json(silent=True) or {}
+    for_date = data.get('date')
+    sub_section = data.get('sub_section')
+    category = data.get('category')
+    if not for_date:
+        return jsonify({'error': 'date is required'}), 400
+    try:
+        rows = _compute_present_status(for_date, sub_section, category)
+        return jsonify({'date': for_date, 'rows': rows})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@reports_bp.route('/reports/present_status/pdf', methods=['POST'])
+def present_status_pdf():
+    # Handle both JSON and form data
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        form_data = request.form.get('data')
+        data = json.loads(form_data) if form_data else {}
+    
+    import json
+    for_date = data.get('date')
+    sub_section = data.get('sub_section')
+    category = data.get('category')
+    
+    if not for_date:
+        return jsonify({'error': 'date is required'}), 400
+    
+    rows = _compute_present_status(for_date, sub_section, category)
+    
+    grouped_rows = defaultdict(list)
+    for r in rows:
+        section = (r.get('sub_section') or 'Unknown').strip()
+        grouped_rows[section].append(r)
+
+    html_content = render_template(
+        'present_status.html',
         for_date=for_date,
         grouped_rows=grouped_rows,
         datetime=datetime

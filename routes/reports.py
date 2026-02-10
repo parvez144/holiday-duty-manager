@@ -104,7 +104,18 @@ def api_payment_sheet():
 
 @reports_bp.route('/reports/payment_sheet/pdf', methods=['POST'])
 def payment_sheet_pdf():
-    data = request.get_json(silent=True) or {}
+    # Accept both JSON and form data
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        # Handle form data
+        form_data = request.form.get('data')
+        if form_data:
+            import json
+            data = json.loads(form_data)
+        else:
+            data = {}
+    
     for_date = data.get('date')
     sub_section = data.get('sub_section')
     category = data.get('category')

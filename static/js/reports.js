@@ -86,22 +86,41 @@ function downloadReport(type) {
         category: catEl.value
     };
 
-    fetch(`/reports/payment_sheet/${type}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-        .then(res => res.blob())
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `payment_sheet_${date}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
-            document.body.append(a);
-            a.click();
-            a.remove();
+    if (type === 'pdf') {
+        // Open PDF in a new tab
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reports/payment_sheet/${type}`;
+        form.target = '_blank';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify(payload);
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    } else {
+        // Download Excel file
+        fetch(`/reports/payment_sheet/${type}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         })
-        .catch(err => alert(`Error downloading ${type}`));
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payment_sheet_${date}.xlsx`;
+                document.body.append(a);
+                a.click();
+                a.remove();
+            })
+            .catch(err => alert(`Error downloading ${type}`));
+    }
 }
 
 searchBtn.addEventListener('click', generateReport);

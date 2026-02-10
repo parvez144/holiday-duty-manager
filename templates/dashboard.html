@@ -231,11 +231,12 @@
     <div class="container">
         <header>
             <div class="logo">
-                <i class="fas fa-calendar-check"></i>
-                <span>MFL Holiday Duty Manager</span>
+                <i class="fa-solid fa-{{ system.company.logo }}"></i>
+                <span>{{ system.company.name }}
+                    <br>Holiday Duty Manager</span>
             </div>
             <div class="user-profile">
-                <span>Welcome back, spk</span>
+                <span>Welcome back, {{user.name }}</span>
                 <i class="fas fa-circle-user fa-lg"></i>
             </div>
         </header>

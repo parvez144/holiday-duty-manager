@@ -13,7 +13,8 @@ reports_bp = Blueprint('reports', __name__)
 
 @reports_bp.route('/reports')
 def reports_page():
-    return render_template('reports.html')
+    today = datetime.now().strftime('%Y-%m-%d')
+    return render_template('reports.html', today=today)
 
 
 @reports_bp.route('/api/reports/sub_sections')

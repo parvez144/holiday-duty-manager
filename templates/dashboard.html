@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Holiday Duty Manager - Dashboard</title>
+    <title>Holiday Duty Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -233,7 +233,7 @@
             <div class="logo">
                 <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
                     style="height: 50px; width: auto; object-fit: contain;">
-                <span>{{ system.company.name }}<br>Holiday Duty Manager</span>
+                <span>{{ system.company.name }}</span>
             </div>
             <div class="user-profile">
                 <span>Welcome back, {{user.name }}</span>
@@ -262,21 +262,20 @@
                 </div>
             </a>
 
-            <div class="card" style="cursor: not-allowed; opacity: 0.8;">
-                <div class="card-icon" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">
-                    <i class="fas fa-users-cog"></i>
+            <div class="card" href="/present_status">
+                <div class="card-icon">
+                    <i class="fas fa-users"></i>
                 </div>
                 <div class="card-content">
-                    <h3>Employee Management</h3>
-                    <p>Coming soon: Manage employee profiles, sections, and salary configurations directly from the
-                        system.</p>
+                    <h3>Employee's Present Status</h3>
+                    <p>Check present status of employees.</p>
                 </div>
-                <div class="card-footer" style="color: #94a3b8;">
-                    Locked Module <i class="fas fa-lock"></i>
+                <div class="card-footer">
+                    Check Present Status <i class="fas fa-arrow-right"></i>
                 </div>
             </div>
 
-            <div class="card" style="cursor: not-allowed; opacity: 0.8;">
+            <!-- <div class="card" style="cursor: not-allowed; opacity: 0.8;">
                 <div class="card-icon" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">
                     <i class="fas fa-sliders"></i>
                 </div>
@@ -288,10 +287,10 @@
                 <div class="card-footer" style="color: #94a3b8;">
                     Locked Module <i class="fas fa-lock"></i>
                 </div>
-            </div>
+            </div> -->
         </div>
 
-        <div class="stats-row">
+        <!-- <div class="stats-row">
             <div class="stat-item">
                 <span class="stat-value">1,500+</span>
                 <span class="stat-label">Active Employees</span>
@@ -308,7 +307,7 @@
                 <span class="stat-value">Sync OK</span>
                 <span class="stat-label">System Health</span>
             </div>
-        </div>
+        </div> -->
 
         <style>
             .app-footer {

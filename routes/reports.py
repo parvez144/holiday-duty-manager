@@ -60,40 +60,41 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
         emp_id = str(emp['Emp_Id'])
         stats = attendance_data.get(emp_id)
         
-        if not stats or not stats['in_time'] or not stats['out_time']:
-            continue # Skip if no complete attendance recorded for this day
+        if not stats:
+            continue # Skip if person has NO punches at all on this day
 
-        in_dt = stats['in_time']
-        out_dt = stats['out_time']
+        # Partitioned Times from Service
+        in_dt = stats.get('in_time')
+        out_dt = stats.get('out_time')
 
         # Start Time Rule: Cleaner @ 7:30 AM, Others @ 8:00 AM
-        is_cleaner = (emp.get('Sub_Section') or '').strip().lower() == 'cleaner'
-        start_h, start_m = (7, 30) if is_cleaner else (8, 0)
-        start_limit = in_dt.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
-        eff_in = max(in_dt, start_limit)
+        if in_dt:
+            is_cleaner = (emp.get('Sub_Section') or '').strip().lower() == 'cleaner'
+            start_h, start_m = (7, 30) if is_cleaner else (8, 0)
+            start_limit = in_dt.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
+            eff_in = max(in_dt, start_limit)
+            disp_in = eff_in.strftime('%H:%M')
+        else:
+            eff_in = None
+            disp_in = "Missing"
 
         # 30-Minute Rounding Down for Out-Time
-        eff_out = out_dt.replace(minute=(out_dt.minute // 30) * 30, second=0, microsecond=0)
-
-        # In-Time Validation: Missing if >= 1 PM (13:00)
-        if eff_in.hour >= 13:
-            disp_in = "Missing"
-        else:
-            disp_in = eff_in.strftime('%H:%M')
-
-        # Out-Time Validation: Missing if < 2 PM (14:00)
-        if eff_out and eff_out.hour >= 14:
+        if out_dt:
+            eff_out = out_dt.replace(minute=(out_dt.minute // 30) * 30, second=0, microsecond=0)
             disp_out = eff_out.strftime('%H:%M')
         else:
-            disp_out = " Missing"
+            eff_out = None
+            disp_out = "Missing"
 
         # Duration Calculation based on effective times
-        duration = eff_out - eff_in
-        raw_hours = duration.total_seconds() / 3600.0
-        
-        # Deduct 1 hour for lunch ONLY if working 6 hours or more
-        deduction = 1.0 if raw_hours >= 6.0 else 0.0
-        work_hours = max(0, raw_hours - deduction)
+        if eff_in and eff_out:
+            duration = eff_out - eff_in
+            raw_hours = duration.total_seconds() / 3600.0
+            # Deduct 1 hour for lunch ONLY if working 6 hours or more
+            deduction = 1.0 if raw_hours >= 6.0 else 0.0
+            work_hours = max(0, raw_hours - deduction)
+        else:
+            work_hours = 0
         
         # Salary calculations
         gross_salary = float(emp.get('Gross_Salary') or 0)

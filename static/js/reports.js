@@ -61,14 +61,15 @@ async function generateReport() {
                     <td>${row.in_time}</td>
                     <td>${row.out_time}</td>
                     <td>${row.hour} hrs</td>
+                    <td>${row.amount}</td>
                 </tr>
             `).join('');
         } else {
-            tableBody.innerHTML = '<tr><td colspan="7" class="empty-state">No attendance found for this day.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No attendance found for this day.</td></tr>';
         }
     } catch (err) {
         alert("Error fetching report data");
-        tableBody.innerHTML = '<tr><td colspan="7" class="empty-state" style="color:#ef4444">Failed to load data.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="empty-state" style="color:#ef4444">Failed to load data.</td></tr>';
     } finally {
         searchBtn.disabled = false;
         fetchSpinner.style.display = 'none';

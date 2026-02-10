@@ -11,27 +11,49 @@ def get_attendance_for_date(report_date, emp_ids=None):
     :param emp_ids: List of employee IDs (optional). If None, fetches for all.
     :return: Dictionary {emp_code: {'in_time': datetime, 'out_time': datetime}}
     """
+    # In-Time: Earliest punch before 1:00 PM (13:00)
+    # Out-Time: Latest punch at or after 1:00 PM (13:00)
+    
     query = db.session.query(
         IClockTransaction.emp_code,
-        func.min(IClockTransaction.punch_time).label('in_time'),
-        func.max(IClockTransaction.punch_time).label('out_time')
+        IClockTransaction.punch_time
     ).filter(func.date(IClockTransaction.punch_time) == report_date)
 
     if emp_ids:
         query = query.filter(IClockTransaction.emp_code.in_(emp_ids))
     
-    query = query.group_by(IClockTransaction.emp_code)
-    
     results = query.all()
 
     attendance_data = {}
+    
+    # Process results to find min before 1 PM and max at/after 1 PM per employee
     for row in results:
-        attendance_data[str(row.emp_code)] = {
-            'in_time': row.in_time,
-            'out_time': row.out_time
+        eid = str(row.emp_code)
+        punch = row.punch_time
+        
+        if eid not in attendance_data:
+            attendance_data[eid] = {'morning_punches': [], 'afternoon_punches': []}
+        
+        if punch.hour < 13:
+            attendance_data[eid]['morning_punches'].append(punch)
+        else:
+            attendance_data[eid]['afternoon_punches'].append(punch)
+
+    final_data = {}
+    for eid, data in attendance_data.items():
+        # User Rule: In-Time must be before 1 PM
+        in_time = min(data['morning_punches']) if data['morning_punches'] else None
+        
+        # User Rule: After 1 PM only Out-Time.
+        # Out-Time MUST be at or after 1 PM.
+        out_time = max(data['afternoon_punches']) if data['afternoon_punches'] else None
+
+        final_data[eid] = {
+            'in_time': in_time,
+            'out_time': out_time
         }
     
-    return attendance_data
+    return final_data
 
 if __name__ == "__main__":
     # To run this standalone, we need to setup the app context

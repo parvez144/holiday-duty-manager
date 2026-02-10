@@ -65,7 +65,19 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
 
         in_dt = stats['in_time']
         out_dt = stats['out_time']
-        
+
+        # In-Time Validation: Missing if >= 1 PM (13:00)
+        if in_dt.hour >= 13:
+            disp_in = "Missing"
+        else:
+            disp_in = in_dt.strftime('%H:%M')
+
+        # Out-Time Validation: Missing if < 2 PM (14:00)
+        if out_dt and out_dt.hour >= 14:
+            disp_out = out_dt.strftime('%H:%M')
+        else:
+            disp_out = " Missing"
+
         # Duration Calculation
         duration = out_dt - in_dt
         work_hours = duration.total_seconds() / 3600.0
@@ -91,13 +103,13 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
         rows.append({
             'sl': serial,
             'id': emp_id,
-            'name': emp['Emp_Name'],
-            'designation': emp['Designation'],
-            'sub_section': emp['Sub_Section'],
+            'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
+            'designation': emp['Designation'].title() if emp['Designation'] else '',
+            'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
             'gross': gross_salary,
             'basic': basic_salary,
-            'in_time': in_dt.strftime('%H:%M'),
-            'out_time': out_dt.strftime('%H:%M'),
+            'in_time': disp_in,
+            'out_time': disp_out,
             'hour': round(work_hours, 2),
             'ot': ot_hours,
             'ot_rate': ot_rate,
@@ -150,9 +162,9 @@ def _compute_present_status(for_date: str, sub_section: str | None, category: st
         rows.append({
             'sl': serial,
             'id': emp_id,
-            'name': emp['Emp_Name'],
-            'designation': emp['Designation'],
-            'sub_section': emp['Sub_Section'],
+            'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
+            'designation': emp['Designation'].title() if emp['Designation'] else '',
+            'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
             'in_time': disp_in,
             'out_time': disp_out,
             'remarks': ''

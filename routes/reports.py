@@ -298,11 +298,11 @@ def payment_sheet_excel():
     wb = Workbook()
     ws = wb.active
     ws.title = 'Payment Sheet'
-    headers = ['SL', 'ID', 'Name', 'Designation', 'Gross', 'In Time', 'Out Time', 'Hour', 'Amount', 'Signature']
+    headers = ['SL', 'ID', 'Name', 'Designation', 'Sub Section', 'Gross', 'Basic', 'In Time', 'Out Time', 'Amount', 'Signature']
     ws.append(headers)
     for r in rows:
         ws.append([
-            r['sl'], r['id'], r['name'], r['designation'], r['gross'], r['in_time'], r['out_time'], r['hour'], r['amount'], ''
+            r['sl'], r['id'], r['name'], r['designation'], r['sub_section'], r['gross'], round(r['basic'], 0), r['in_time'], r['out_time'], r['amount'], ''
         ])
     
     for col in range(1, len(headers) + 1):

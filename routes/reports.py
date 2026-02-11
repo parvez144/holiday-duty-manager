@@ -182,32 +182,9 @@ def _compute_present_status(for_date: str, sub_section: str | None, category: st
         in_dt = stats.get('in_time')
         out_dt = stats.get('out_time')
 
-        # Start Time Rule: Cleaner @ 7:30 AM, Others @ 8:00 AM
-        if in_dt:
-            is_cleaner = (emp.get('Sub_Section') or '').strip().lower() == 'cleaner'
-            start_h, start_m = (7, 30) if is_cleaner else (8, 0)
-            start_limit = in_dt.replace(hour=start_h, minute=start_m, second=0, microsecond=0)
-            eff_in = max(in_dt, start_limit)
-            
-            # In-Time Validation: Missing if >= 1 PM (13:00)
-            if eff_in.hour >= 13:
-                disp_in = "Missing"
-            else:
-                disp_in = eff_in.strftime('%H:%M')
-        else:
-            disp_in = "Missing"
-
-        # 30-Minute Rounding Down for Out-Time
-        if out_dt:
-            eff_out = out_dt.replace(minute=(out_dt.minute // 30) * 30, second=0, microsecond=0)
-            
-            # Out-Time Validation: Missing if < 2 PM (14:00)
-            if eff_out.hour >= 14:
-                disp_out = eff_out.strftime('%H:%M')
-            else:
-                disp_out = " Missing"
-        else:
-            disp_out = " Missing"
+        # Show RAW Times directly from database
+        disp_in = in_dt.strftime('%H:%M') if in_dt else "Missing"
+        disp_out = out_dt.strftime('%H:%M') if out_dt else " Missing"
 
         rows.append({
             'sl': serial,

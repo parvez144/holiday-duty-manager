@@ -118,10 +118,23 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             amount = daily_basic
 
         # Force 0 amount if any punch is missing/invalid
+        # User Rule Update: For Staff, 1 punch is enough for amount. 
+        # For Workers, 2 punches are required as OT depends on duration.
         if 'Missing' in disp_in or 'Missing' in disp_out:
-            amount = 0
-            ot_hours = 0
-            work_hours = 0
+            if 'worker' in category:
+                amount = 0
+                ot_hours = 0
+                work_hours = 0
+            else:
+                # Non-worker (Staff): Single punch is enough to get daily basic.
+                # However, if both happen to be Missing, amount is 0.
+                if 'Missing' in disp_in and 'Missing' in disp_out:
+                    amount = 0
+                else:
+                    # Amount is already daily_basic from line 118
+                    pass
+                ot_hours = 0
+                work_hours = 0
 
         rows.append({
             'sl': serial,

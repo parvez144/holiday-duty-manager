@@ -1,23 +1,27 @@
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load variables from .env file
+load_dotenv()
 
 # System & Developer Information
 COMPANY_NAME = 'Manel Fashion Limited'
+VERSION = '1.0.0'
 
 system_info = {
-    'version': '1.0.0',
+    'version': VERSION,
     'developer': {
         'text': f'Built for {COMPANY_NAME} by',
         'name': 'Shahriar',
-        'email': 'sparvez.ipa@gmail.com',
-        'phone': '+880 1571745811',
         'website': 'https://github.com/parvez144'
     },
     'copyright': {
         'start_year': 2026,
         'year': datetime.now().year,
         'holder': 'SPK',
-        'text': f'All rights reserved.',
-        'version': '1.0.0',
+        'text': 'All rights reserved.',
+        'version': VERSION,
     },
     'company': {
         'name': COMPANY_NAME,
@@ -30,8 +34,7 @@ system_info = {
 user = {
     'username': 'spk',
     'role': 'Admin',
-    'name': 'Shahriar Parvez Khan',
-    'phone': '+880 1571745811',
-
+    'name': os.getenv('ADMIN_NAME'),
+    'phone': os.getenv('ADMIN_PHONE'),
 }
 

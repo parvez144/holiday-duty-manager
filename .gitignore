@@ -32,7 +32,7 @@ ENV/
 *.swo
 
 # Database & Config
-config.py
+.env
 
 
 # Data files

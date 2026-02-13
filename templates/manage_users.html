@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - {{ system.company.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <header
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--border);">
+            <div class="logo"
+                style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
+                    style="height: 40px; width: auto; object-fit: contain;">
+                <span>{{ system.company.name }}</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted);">
+                <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
+                    title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </header>
+
+        <a href="/"
+            style="text-decoration: none; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; font-size: 0.875rem;">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <h1>User Management</h1>
+        <p class="subtitle">Add, edit, or remove application users and manage access levels.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            style="padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; background: {% if category == 'danger' %}rgba(239, 68, 68, 0.1){% else %}rgba(16, 185, 129, 0.1){% endif %}; color: {% if category == 'danger' %}#fca5a5{% else %}#6ee7b7{% endif %}; border: 1px solid {% if category == 'danger' %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %};">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="controls" style="margin-bottom: 2rem;">
+            <form action="{{ url_for('users.add_user') }}" method="POST"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; width: 100%;">
+                <div class="control-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="johndoe" required>
+                </div>
+                <div class="control-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="John Doe" required>
+                </div>
+                <div class="control-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <div class="control-group">
+                    <label>Role</label>
+                    <select name="role">
+                        <option value="User">User</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button type="submit" class="btn-primary" style="width: 100%;"><i class="fas fa-user-plus"></i> Add
+                        User</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td style="font-weight: 500;">{{ user.username }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>
+                            <span
+                                style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; background: {% if user.role == 'Admin' %}rgba(99, 102, 241, 0.2){% else %}rgba(148, 163, 184, 0.2){% endif %}; color: {% if user.role == 'Admin' %}#818cf8{% else %}#94a3b8{% endif %}; border: 1px solid rgba(255,255,255,0.05);">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.id != current_user.id %}
+                            <a href="{{ url_for('users.delete_user', id=user.id) }}"
+                                onclick="return confirm('Are you sure you want to delete this user?')"
+                                style="color: #fca5a5; text-decoration: none;" title="Delete User">
+                                <i class="fas fa-trash-can"></i>
+                            </a>
+                            {% else %}
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">(Current User)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="app-footer no-print">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
+                    }}-{% endif %}{{ system.copyright.year }}
+                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                </div>
+                <div class="developer-info">
+                    {{ system.developer.text }}
+                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name }}</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

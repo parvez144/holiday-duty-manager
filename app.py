@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for
 from routes.main import main_bp
 from routes.reports import reports_bp
 from routes.auth import auth_bp
+from routes.users import users_bp
 from extensions import db, login_manager
 from models.user import User
 from system_config import system_info, user
@@ -26,6 +27,7 @@ def inject_system_info():
 app.register_blueprint(main_bp)
 app.register_blueprint(reports_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(users_bp)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

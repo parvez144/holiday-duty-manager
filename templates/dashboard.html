@@ -311,6 +311,21 @@
                 </div>
             </a>
 
+            {% if current_user.role == 'Admin' %}
+            <a href="/users" class="card">
+                <div class="card-icon" style="color: #c084fc; background: rgba(192, 132, 252, 0.1);">
+                    <i class="fas fa-user-gear"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Manage Users</h3>
+                    <p>Add new users, change roles, or remove access for existing accounts.</p>
+                </div>
+                <div class="card-footer" style="color: #c084fc;">
+                    User Settings <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+            {% endif %}
+
             <!-- <div class="card" style="cursor: not-allowed; opacity: 0.8;">
                 <div class="card-icon" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">
                     <i class="fas fa-sliders"></i>

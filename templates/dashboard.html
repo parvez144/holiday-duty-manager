@@ -269,8 +269,11 @@
                 <span>{{ system.company.name }}</span>
             </div>
             <div class="user-profile">
-                <span>Welcome back, {{user.name }}</span>
-                <i class="fas fa-circle-user fa-lg"></i>
+                <span>Welcome back, {{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
+                    title="Logout">
+                    <i class="fas fa-sign-out-alt fa-lg"></i>
+                </a>
             </div>
         </header>
 

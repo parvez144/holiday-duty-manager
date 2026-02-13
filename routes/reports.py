@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
+from flask_login import login_required
 from services.employee_service import get_employees, get_distinct_sub_sections, get_distinct_categories
 from services.attendance_service import get_attendance_for_date
 from datetime import datetime
@@ -13,24 +14,28 @@ reports_bp = Blueprint('reports', __name__)
 
 
 @reports_bp.route('/reports')
+@login_required
 def reports_page():
     today = datetime.now().strftime('%Y-%m-%d')
     return render_template('reports.html', today=today)
 
 
 @reports_bp.route('/present_status')
+@login_required
 def present_status_page():
     today = datetime.now().strftime('%Y-%m-%d')
     return render_template('present_filter.html', today=today)
 
 
 @reports_bp.route('/api/reports/sub_sections')
+@login_required
 def api_sub_sections():
     """Return distinct sub_section list from employees."""
     return jsonify(get_distinct_sub_sections())
 
 
 @reports_bp.route('/api/reports/categories')
+@login_required
 def api_categories():
     """Return distinct category list from employees."""
     return jsonify(get_distinct_categories())

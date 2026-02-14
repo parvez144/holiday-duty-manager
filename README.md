@@ -42,6 +42,14 @@ A Flask-based web application designed for **Manel Fashion Limited** to manage e
    pip install -r requirements.txt
    ```
 
+### ⚠️ Pre-requisite for PDF Export (Windows)
+
+The `WeasyPrint` library requires the **GTK3 runtime** to be installed on Windows. Without this, the application will fail to start or export PDFs.
+
+1. Download the **GTK3 for Windows Runtime** installer from [GitHub (tschoonj/GTK-for-Windows-Runtime-Environment-Installer)](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases).
+2. Install it and ensure you select **"Add GTK+ to the PATH environment variable"** during installation.
+3. **Restart** your terminal or PC after installation.
+
 ## ⚙️ Configuration
 
 Copy the `.env.example` file to a new file named `.env` and fill in your actual credentials:

@@ -72,6 +72,13 @@ def _compute_payment_sheet(for_date: str, section: str | None, sub_section: str 
     
     for emp in employees:
         emp_id = str(emp['Emp_Id'])
+        
+        # Skip Security personnel as they don't get holiday payment
+        sec = (emp.get('Section') or '').strip().lower()
+        sub_sec = (emp.get('Sub_Section') or '').strip().lower()
+        if sec == 'security' or sub_sec == 'security':
+            continue
+
         stats = attendance_data.get(emp_id)
         
         if not stats:

@@ -7,6 +7,7 @@ class Employee(db.Model):
     Emp_Name = db.Column(db.String(255), nullable=False)
     Designation = db.Column(db.String(100))
     Sub_Section = db.Column(db.String(100))
+    Section = db.Column(db.String(100))
     Category = db.Column(db.String(50))
     Grade = db.Column(db.String(50))
     Gross_Salary = db.Column(db.Numeric(15, 2))

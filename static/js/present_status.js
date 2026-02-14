@@ -1,6 +1,7 @@
 // Elements
 const dateEl = document.getElementById('date-select');
 const sectionEl = document.getElementById('section-select');
+const subSectionEl = document.getElementById('sub-section-select');
 const catEl = document.getElementById('category-select');
 const searchBtn = document.getElementById('btn-fetch');
 const pdfBtn = document.getElementById('btn-pdf');
@@ -9,7 +10,7 @@ const fetchSpinner = document.getElementById('fetch-spinner');
 
 // Load Filters
 function loadFilters() {
-    fetch('/api/reports/sub_sections')
+    fetch('/api/reports/sections')
         .then(res => res.json())
         .then(data => {
             data.forEach(s => {
@@ -18,6 +19,8 @@ function loadFilters() {
                 opt.textContent = s;
                 sectionEl.appendChild(opt);
             });
+            // After loading sections, update sub-sections
+            updateSubSections();
         });
 
     fetch('/api/reports/categories')
@@ -32,13 +35,30 @@ function loadFilters() {
         });
 }
 
+function updateSubSections() {
+    const section = sectionEl.value;
+    fetch(`/api/reports/sub_sections?section=${encodeURIComponent(section)}`)
+        .then(res => res.json())
+        .then(data => {
+            // Clear existing options except default
+            subSectionEl.innerHTML = '<option value="">All Sub-Sections</option>';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                subSectionEl.appendChild(opt);
+            });
+        });
+}
+
 function generateReport() {
     const date = dateEl.value;
     if (!date) return alert("Please select a date");
 
     const payload = {
         date: date,
-        sub_section: sectionEl.value,
+        section: sectionEl.value,
+        sub_section: subSectionEl.value,
         category: catEl.value
     };
 
@@ -87,7 +107,8 @@ function downloadPDF() {
 
     const payload = {
         date: date,
-        sub_section: sectionEl.value,
+        section: sectionEl.value,
+        sub_section: subSectionEl.value,
         category: catEl.value
     };
 
@@ -109,5 +130,6 @@ function downloadPDF() {
 }
 
 loadFilters();
+sectionEl.addEventListener('change', updateSubSections);
 searchBtn.addEventListener('click', generateReport);
 pdfBtn.addEventListener('click', downloadPDF);

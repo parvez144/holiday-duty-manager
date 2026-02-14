@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, send_file
 from flask_login import login_required
-from services.employee_service import get_employees, get_distinct_sub_sections, get_distinct_categories
+from services.employee_service import get_employees, get_distinct_sections, get_distinct_categories
 from services.attendance_service import get_attendance_for_date
 from datetime import datetime
 from collections import defaultdict
@@ -27,11 +27,20 @@ def present_status_page():
     return render_template('present_filter.html', today=today)
 
 
+@reports_bp.route('/api/reports/sections')
+@login_required
+def api_sections():
+    """Return distinct section list from employees."""
+    return jsonify(get_distinct_sections())
+
+
 @reports_bp.route('/api/reports/sub_sections')
 @login_required
 def api_sub_sections():
-    """Return distinct sub_section list from employees."""
-    return jsonify(get_distinct_sub_sections())
+    """Return distinct sub_section list from employees, optionally filtered by section."""
+    from services.employee_service import get_distinct_sub_sections
+    section = request.args.get('section')
+    return jsonify(get_distinct_sub_sections(section=section))
 
 
 @reports_bp.route('/api/reports/categories')
@@ -41,14 +50,14 @@ def api_categories():
     return jsonify(get_distinct_categories())
 
 
-def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str | None):
-    """Compute payment sheet rows for a given date and optional sub_section.
+def _compute_payment_sheet(for_date: str, section: str | None, sub_section: str | None, category: str | None):
+    """Compute payment sheet rows for a given date and optional section/sub_section.
     
     Uses employee data from employee_service and 
     attendance logs from attendance_service.
     """
     # 1. Fetch Employees
-    employees = get_employees(sub_section, category)
+    employees = get_employees(section=section, sub_section=sub_section, category=category)
     if not employees:
         return []
 
@@ -147,6 +156,7 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
             'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
             'designation': emp['Designation'].title() if emp['Designation'] else '',
             'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
+            'section': emp['Section'].title() if emp['Section'] else '',
             'category': emp.get('Category', ''),
             'gross': gross_salary,
             'basic': round(basic_salary, 0),
@@ -164,9 +174,9 @@ def _compute_payment_sheet(for_date: str, sub_section: str | None, category: str
     return rows
 
 
-def _compute_present_status(for_date: str, sub_section: str | None, category: str | None):
+def _compute_present_status(for_date: str, section: str | None, sub_section: str | None, category: str | None):
     """Compute present status rows (attendance only)."""
-    employees = get_employees(sub_section, category)
+    employees = get_employees(section=section, sub_section=sub_section, category=category)
     if not employees:
         return []
 
@@ -210,13 +220,14 @@ def _compute_present_status(for_date: str, sub_section: str | None, category: st
 def api_payment_sheet():
     data = request.get_json(silent=True) or {}
     for_date = data.get('date')
+    section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
     if not for_date:
         return jsonify({'error': 'date is required (YYYY-MM-DD)'}), 400
     try:
-        rows = _compute_payment_sheet(for_date, sub_section, category)
-        return jsonify({'date': for_date, 'sub_section': sub_section, 'category': category, 'rows': rows})
+        rows = _compute_payment_sheet(for_date, section, sub_section, category)
+        return jsonify({'date': for_date, 'section': section, 'sub_section': sub_section, 'category': category, 'rows': rows})
     except Exception as e:
         print('payment_sheet error:', e)
         import traceback
@@ -238,17 +249,18 @@ def payment_sheet_pdf():
             data = {}
     
     for_date = data.get('date')
+    section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     
-    rows = _compute_payment_sheet(for_date, sub_section, category)
+    rows = _compute_payment_sheet(for_date, section, sub_section, category)
     
     grouped_rows = defaultdict(list)
     for r in rows:
-        section = (r.get('sub_section') or 'Unknown').strip()
-        grouped_rows[section].append(r)
+        sec_name = (r.get('section') or 'Unknown').strip()
+        grouped_rows[sec_name].append(r)
 
     html_content = render_template(
         'payment_sheet_pdf.html',
@@ -268,12 +280,13 @@ def payment_sheet_pdf():
 def api_present_status():
     data = request.get_json(silent=True) or {}
     for_date = data.get('date')
+    section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     try:
-        rows = _compute_present_status(for_date, sub_section, category)
+        rows = _compute_present_status(for_date, section, sub_section, category)
         return jsonify({'date': for_date, 'rows': rows})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -289,18 +302,19 @@ def present_status_pdf():
         data = json.loads(form_data) if form_data else {}
     
     for_date = data.get('date')
+    section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
     
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     
-    rows = _compute_present_status(for_date, sub_section, category)
+    rows = _compute_present_status(for_date, section, sub_section, category)
     
     grouped_rows = defaultdict(list)
     for r in rows:
-        section = (r.get('sub_section') or 'Unknown').strip()
-        grouped_rows[section].append(r)
+        sec_name = (r.get('section') or 'Unknown').strip()
+        grouped_rows[sec_name].append(r)
 
     html_content = render_template(
         'present_status.html',
@@ -320,21 +334,22 @@ def present_status_pdf():
 def payment_sheet_excel():
     data = request.get_json(silent=True) or {}
     for_date = data.get('date')
+    section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     
-    rows = _compute_payment_sheet(for_date, sub_section, category)
+    rows = _compute_payment_sheet(for_date, section, sub_section, category)
 
     wb = Workbook()
     ws = wb.active
     ws.title = 'Payment Sheet'
-    headers = ['SL', 'ID', 'Name', 'Designation', 'Sub Section', 'Gross', 'Basic', 'In Time', 'Out Time', 'Amount', 'Signature']
+    headers = ['SL', 'ID', 'Name', 'Designation', 'Section', 'Gross', 'Basic', 'In Time', 'Out Time', 'Amount', 'Signature']
     ws.append(headers)
     for r in rows:
         ws.append([
-            r['sl'], r['id'], r['name'], r['designation'], r['sub_section'], r['gross'], round(r['basic'], 0), r['in_time'], r['out_time'], r['amount'], ''
+            r['sl'], r['id'], r['name'], r['designation'], r['section'], r['gross'], round(r['basic'], 0), r['in_time'], r['out_time'], r['amount'], ''
         ])
     
     for col in range(1, len(headers) + 1):

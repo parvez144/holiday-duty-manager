@@ -1,5 +1,6 @@
 const dateEl = document.getElementById('date-select');
 const sectionEl = document.getElementById('section-select');
+const subSectionEl = document.getElementById('sub-section-select');
 const catEl = document.getElementById('category-select');
 const searchBtn = document.getElementById('btn-fetch');
 const tableBody = document.getElementById('report-body');
@@ -8,7 +9,7 @@ const fetchSpinner = document.getElementById('fetch-spinner');
 async function loadFilters() {
     try {
         const [sections, categories] = await Promise.all([
-            fetch('/api/reports/sub_sections').then(r => r.json()),
+            fetch('/api/reports/sections').then(r => r.json()),
             fetch('/api/reports/categories').then(r => r.json())
         ]);
 
@@ -25,8 +26,31 @@ async function loadFilters() {
             opt.textContent = c;
             catEl.appendChild(opt);
         });
+
+        // Initialize sub-sections
+        updateSubSections();
     } catch (err) {
         console.error("Failed to load filters", err);
+    }
+}
+
+async function updateSubSections() {
+    const section = sectionEl.value;
+    try {
+        const res = await fetch(`/api/reports/sub_sections?section=${encodeURIComponent(section)}`);
+        const subSections = await res.json();
+
+        // Clear existing options except the first one
+        subSectionEl.innerHTML = '<option value="">All Sub-Sections</option>';
+
+        subSections.forEach(ss => {
+            const opt = document.createElement('option');
+            opt.value = ss;
+            opt.textContent = ss;
+            subSectionEl.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Failed to update sub-sections", err);
     }
 }
 
@@ -44,7 +68,8 @@ async function generateReport() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 date: date,
-                sub_section: sectionEl.value,
+                section: sectionEl.value,
+                sub_section: subSectionEl.value,
                 category: catEl.value
             })
         });
@@ -57,7 +82,7 @@ async function generateReport() {
                     <td>${row.sl}</td>
                     <td>${row.id}</td>
                     <td>${row.name}</td>
-                    <td>${row.sub_section}</td>
+                    <td>${row.section}</td>
                     <td>${row.in_time}</td>
                     <td>${row.out_time}</td>
                     <td>${row.hour} hrs</td>
@@ -82,7 +107,8 @@ function downloadReport(type) {
 
     const payload = {
         date: date,
-        sub_section: sectionEl.value,
+        section: sectionEl.value,
+        sub_section: subSectionEl.value,
         category: catEl.value
     };
 
@@ -92,12 +118,12 @@ function downloadReport(type) {
         form.method = 'POST';
         form.action = `/reports/payment_sheet/${type}`;
         form.target = '_blank';
-        
+
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = 'data';
         input.value = JSON.stringify(payload);
-        
+
         form.appendChild(input);
         document.body.appendChild(form);
         form.submit();
@@ -123,6 +149,7 @@ function downloadReport(type) {
     }
 }
 
+sectionEl.addEventListener('change', updateSubSections);
 searchBtn.addEventListener('click', generateReport);
 document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
 document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));

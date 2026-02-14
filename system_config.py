@@ -25,7 +25,7 @@ system_info = {
     },
     'company': {
         'name': COMPANY_NAME,
-        'address': 'Gazipur, Bangladesh',
+        'address': 'Bason 79/1, Vitipara, Gazipur Sadar, Gazipur.',
         'url': 'https://manelfashion.net',
         'logo': 'img/logo.png'
     }

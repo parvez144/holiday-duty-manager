@@ -1,6 +1,8 @@
 from flask import Flask, redirect, url_for
 from routes.main import main_bp
-from routes.reports import reports_bp
+from routes.holiday_reports import holiday_reports_bp
+from routes.api import api_bp
+from routes.night_bill import night_bill_bp
 from routes.auth import auth_bp
 from routes.users import users_bp
 from extensions import db, login_manager
@@ -25,7 +27,9 @@ def inject_system_info():
 
 # Register blueprints
 app.register_blueprint(main_bp)
-app.register_blueprint(reports_bp)
+app.register_blueprint(holiday_reports_bp)
+app.register_blueprint(api_bp)
+app.register_blueprint(night_bill_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 

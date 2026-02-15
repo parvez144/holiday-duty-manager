@@ -1,10 +1,4 @@
-import sys
-import os
 import argparse
-
-# Add parent directory to sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from app import app
 from extensions import db
 from models.user import User
@@ -54,7 +48,7 @@ def create_user(username, password, name, role='User'):
         print(f"Success: User '{username}' ({role}) created successfully!")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Holiday Duty Manager - Management Utilities")
+    parser = argparse.ArgumentParser(description="Holiday Duty Manager - User Management Tool")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Command: init

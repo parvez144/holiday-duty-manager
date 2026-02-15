@@ -67,8 +67,14 @@ To initialize the local database and create necessary tables:
 # Activate virtual environment first
 venv\Scripts\activate
 
-# Initialize local tables (iclock_transaction, users, etc.)
-python sync_data.py --init
+# Initialize local tables and create default admin
+python user_manager.py init
+```
+
+If you need to create a new user manually:
+
+```bash
+python user_manager.py create-user "username" "password" "Full Name" --role "User"
 ```
 
 If you need to import employee data from a CSV file:

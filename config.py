@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 from urllib.parse import quote_plus
 
 # Load variables from .env file
@@ -38,4 +39,7 @@ SQLALCHEMY_BINDS = {
 }
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Session Lifetime
+PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(os.getenv('SESSION_TIMEOUT_MINUTES') or 30))
 

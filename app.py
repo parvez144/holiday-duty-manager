@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, session
 from routes.main import main_bp
 from routes.holiday_reports import holiday_reports_bp
 from routes.api import api_bp
@@ -25,6 +25,11 @@ def load_user(user_id):
 @app.context_processor
 def inject_system_info():
     return dict(system=system_info, user=user)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    session.modified = True
 
 # Register blueprints
 app.register_blueprint(main_bp)

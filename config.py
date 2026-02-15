@@ -22,12 +22,19 @@ db_config = {
 # Flask Security Key
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+# Remote Database Settings
+REMOTE_DB_HOST = os.getenv('REMOTE_DB_HOST', DB_HOST)
+REMOTE_DB_PORT = os.getenv('REMOTE_DB_PORT', '3306')
+REMOTE_DB_USER = os.getenv('REMOTE_DB_USER', DB_USER)
+REMOTE_DB_PASS = os.getenv('REMOTE_DB_PASS', DB_PASS)
+REMOTE_DB_NAME = os.getenv('REMOTE_DB_NAME', 'bio_time')
+
 # Main Database (MFL)
 SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{quote_plus(DB_USER)}:{quote_plus(DB_PASS)}@{DB_HOST}:{DB_PORT}/mfl"
 
-# Secondary Database (BioTime)
+# Secondary Database (BioTime - Remote)
 SQLALCHEMY_BINDS = {
-    'bio_time': f"mysql+pymysql://{quote_plus(DB_USER)}:{quote_plus(DB_PASS)}@{DB_HOST}:{DB_PORT}/bio_time"
+    'bio_time': f"mysql+pymysql://{quote_plus(REMOTE_DB_USER)}:{quote_plus(REMOTE_DB_PASS)}@{REMOTE_DB_HOST}:{REMOTE_DB_PORT}/{REMOTE_DB_NAME}"
 }
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -5,6 +5,7 @@ from routes.api import api_bp
 from routes.night_bill import night_bill_bp
 from routes.auth import auth_bp
 from routes.users import users_bp
+from routes.security_payment import security_payment_bp
 from extensions import db, login_manager
 from models.user import User
 from system_config import system_info, user
@@ -32,6 +33,7 @@ app.register_blueprint(api_bp)
 app.register_blueprint(night_bill_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
+app.register_blueprint(security_payment_bp)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

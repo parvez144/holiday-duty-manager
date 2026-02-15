@@ -324,6 +324,19 @@
                 </div>
             </a>
 
+            <a href="{{ url_for('security_payment.security_payment_page') }}" class="card">
+                <div class="card-icon">
+                    <i class="fa-solid fa-users-between-lines"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Security Holiday Payment <br> Coming soon</h3>
+                    <p>Generate security holiday payment.</p>
+                </div>
+                <div class="card-footer">
+                    Generate Security Holiday Payment <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+
             {% if current_user.role == 'Admin' %}
             <a href="/users" class="card">
                 <div class="card-icon" style="color: #c084fc; background: rgba(192, 132, 252, 0.1);">

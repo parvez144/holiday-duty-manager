@@ -195,9 +195,16 @@ def _compute_present_status(for_date: str, section: str | None, sub_section: str
     
     for emp in employees:
         emp_id = str(emp['Emp_Id'])
+        
+        # Skip Security personnel as they are restricted from these reports
+        sec = (emp.get('Section') or '').strip().lower()
+        sub_sec = (emp.get('Sub_Section') or '').strip().lower()
+        if sec == 'security' or sub_sec == 'security':
+            continue
+
         stats = attendance_data.get(emp_id)
         
-        # In this report, only skip if NO punches at all on this day
+        # Skip if no attendance data at all
         if not stats or (not stats.get('in_time') and not stats.get('out_time')):
             continue
 

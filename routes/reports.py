@@ -266,7 +266,7 @@ def payment_sheet_pdf():
     
     grouped_rows = defaultdict(list)
     for r in rows:
-        sec_name = (r.get('section') or 'Unknown').strip()
+        sec_name = (r.get('section') or 'All').strip()
         grouped_rows[sec_name].append(r)
 
     html_content = render_template(
@@ -320,7 +320,7 @@ def present_status_pdf():
     
     grouped_rows = defaultdict(list)
     for r in rows:
-        sec_name = (r.get('section') or 'Unknown').strip()
+        sec_name = (r.get('section') or 'All').strip()
         grouped_rows[sec_name].append(r)
 
     html_content = render_template(

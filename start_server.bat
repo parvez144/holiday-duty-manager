@@ -2,6 +2,9 @@
 TITLE Holiday Duty Manager Server
 echo Starting Holiday Duty Manager...
 cd /d "%~dp0"
-call venv\Scripts\activate
+echo Starting Attendance Sync...
+start "Attendance Sync" venv\Scripts\python sync_data.py --loop
+
+echo Starting Web Server...
 python serve.py
 pause

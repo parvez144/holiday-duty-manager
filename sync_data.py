@@ -8,6 +8,25 @@ import time
 def init_db():
     """Create the local tables if they don't exist."""
     print("Initializing local database tables...")
+    
+    # Create database if it doesn't exist
+    import pymysql
+    from config import DB_HOST, DB_PORT, DB_USER, DB_PASS
+    
+    try:
+        connection = pymysql.connect(
+            host=DB_HOST,
+            port=int(DB_PORT),
+            user=DB_USER,
+            password=DB_PASS
+        )
+        with connection.cursor() as cursor:
+            cursor.execute("CREATE DATABASE IF NOT EXISTS mfl")
+        connection.close()
+        print("Database 'mfl' checked/created.")
+    except Exception as e:
+        print(f"Warning: Could not check/create database 'mfl' automatically: {e}")
+
     with app.app_context():
         # This will only create tables for models that use the default bind (mfl)
         # and don't exist yet.

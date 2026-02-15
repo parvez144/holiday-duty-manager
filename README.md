@@ -52,23 +52,29 @@ The `WeasyPrint` library requires the **GTK3 runtime** to be installed on Window
 
 ## ⚙️ Configuration
 
-Copy the `.env.example` file to a new file named `.env` and fill in your actual credentials:
+Copy the `.env.example` file to a new file named `.env` and fill in your actual credentials.
+
+### 🗄️ Database Setup
+
+The application uses two database connections:
+
+1. **MFL Database (Local)**: Stores application users, employee lists, and local attendance records.
+2. **BioTime Database (Remote)**: The source for biometric punch data.
+
+To initialize the local database and create necessary tables:
 
 ```bash
-# Database Configuration
-DB_HOST=your-db-host
-DB_PORT=3306
-DB_USER=your-db-user
-DB_PASS=your-db-password
+# Activate virtual environment first
+venv\Scripts\activate
 
-# Flask Security
-SECRET_KEY=your-super-secret-key
+# Initialize local tables (iclock_transaction, users, etc.)
+python sync_data.py --init
+```
 
-# Developer & Admin Info
-DEV_EMAIL=your-email@example.com
-DEV_PHONE=+880 0000000000
-ADMIN_NAME=Admin Name
-ADMIN_PHONE=+880 0000000000
+If you need to import employee data from a CSV file:
+
+```bash
+python import_emp_csv.py path/to/your/employees.csv
 ```
 
 ## 🏃 Running the Application

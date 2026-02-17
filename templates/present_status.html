@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Present Status - {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%B-%Y') }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
     <style>
         /* ==================================
            PAGE SETUP & WEASYPRINT EXTENSIONS

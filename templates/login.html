@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - {{ system.company.name }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -39,8 +42,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .logo {
@@ -133,22 +143,23 @@
         }
     </style>
 </head>
+
 <body>
     <div class="login-card">
         <div class="logo">
             {% if system.company.logo %}
-                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo">
+            <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo">
             {% endif %}
         </div>
         <h2>Welcome Back to <br> Holiday Duty Manager</h2>
         <p class="subtitle">Please enter your credentials to continue</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <form method="POST" action="{{ url_for('auth.login') }}">
@@ -166,9 +177,11 @@
             </div>
             <button type="submit">Sign In</button>
             <p style="text-align:center" class="text-dim">
-                Don't have an account? <br>Please contact with <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name}}</a>
+                Don't have an account? <br>Please contact with <a href="{{ system.developer.website }}" target="_blank">
+                    {{ system.developer.name}}</a>
             </p>
         </form>
     </div>
 </body>
+
 </html>

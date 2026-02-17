@@ -5,9 +5,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users - {{ system.company.name }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+    <style>
+        .alert-banner {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .role-admin {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .role-user {
+            background: rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
 </head>
 
 <body>
@@ -40,8 +83,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
-        <div
-            style="padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; background: {% if category == 'danger' %}rgba(239, 68, 68, 0.1){% else %}rgba(16, 185, 129, 0.1){% endif %}; color: {% if category == 'danger' %}#fca5a5{% else %}#6ee7b7{% endif %}; border: 1px solid {% if category == 'danger' %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %};">
+        <div class="alert-banner alert-{{ category }}">
             {{ message }}
         </div>
         {% endfor %}
@@ -96,7 +138,7 @@
                         <td>{{ user.name }}</td>
                         <td>
                             <span
-                                style="padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; background: {% if user.role == 'Admin' %}rgba(99, 102, 241, 0.2){% else %}rgba(148, 163, 184, 0.2){% endif %}; color: {% if user.role == 'Admin' %}#818cf8{% else %}#94a3b8{% endif %}; border: 1px solid rgba(255,255,255,0.05);">
+                                class="role-badge {% if user.role == 'Admin' %}role-admin{% else %}role-user{% endif %}">
                                 {{ user.role }}
                             </span>
                         </td>

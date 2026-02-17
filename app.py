@@ -1,4 +1,5 @@
-from flask import Flask, redirect, url_for, session
+import os
+from flask import Flask, redirect, url_for, session, send_from_directory
 from routes.main import main_bp
 from routes.holiday_reports import holiday_reports_bp
 from routes.api import api_bp
@@ -30,6 +31,11 @@ def inject_system_info():
 def make_session_permanent():
     session.permanent = True
     session.modified = True
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static', 'img'),
+                               'logo.png', mimetype='image/png')
 
 # Register blueprints
 app.register_blueprint(main_bp)

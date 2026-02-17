@@ -44,3 +44,6 @@ personnel_employee_desc.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# Sync
+sync.lock

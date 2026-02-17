@@ -3,6 +3,7 @@ const dateEl = document.getElementById('date-select');
 const sectionEl = document.getElementById('section-select');
 const subSectionEl = document.getElementById('sub-section-select');
 const catEl = document.getElementById('category-select');
+const statusEl = document.getElementById('status-select');
 const searchBtn = document.getElementById('btn-fetch');
 const pdfBtn = document.getElementById('btn-pdf');
 const tableBody = document.getElementById('report-body');
@@ -59,7 +60,8 @@ function generateReport() {
         date: date,
         section: sectionEl.value,
         sub_section: subSectionEl.value,
-        category: catEl.value
+        category: catEl.value,
+        status: statusEl.value
     };
 
     searchBtn.disabled = true;
@@ -109,7 +111,8 @@ function downloadPDF() {
         date: date,
         section: sectionEl.value,
         sub_section: subSectionEl.value,
-        category: catEl.value
+        category: catEl.value,
+        status: statusEl.value
     };
 
     // Open PDF in a new tab

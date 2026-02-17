@@ -28,7 +28,7 @@ def get_attendance_for_date(report_date, emp_ids=None):
     
     # Process results to find min before 1 PM and max at/after 1 PM per employee
     for row in results:
-        eid = str(row.emp_code)
+        eid = str(row.emp_code).strip()
         punch = row.punch_time
         
         if eid not in attendance_data:

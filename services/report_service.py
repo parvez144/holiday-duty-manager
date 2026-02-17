@@ -126,20 +126,32 @@ def compute_payment_sheet(for_date: str, section: str | None, sub_section: str |
 
     return rows
 
-def compute_present_status(for_date: str, section: str | None, sub_section: str | None, category: str | None):
-    """Compute present status rows (attendance only)."""
+def compute_present_status(for_date: str, section: str | None, sub_section: str | None, category: str | None, status: str = 'all'):
+    """Compute present status rows (attendance only) with status filtering."""
+    # Ensure for_date is a date object for SQLAlchemy comparison
+    if isinstance(for_date, str):
+        try:
+            for_date_obj = datetime.strptime(for_date, '%Y-%m-%d').date()
+        except:
+            for_date_obj = for_date
+    else:
+        for_date_obj = for_date
+
+    print(f"DEBUG: compute_present_status - Date: {for_date_obj}, Status Filter: {status}")
+
     employees = get_employees(section=section, sub_section=sub_section, category=category)
     if not employees:
+        print("DEBUG: No employees found for filters")
         return []
 
-    emp_ids = [str(e['Emp_Id']) for e in employees]
-    attendance_data = get_attendance_for_date(for_date, emp_ids)
+    emp_ids = [str(e['Emp_Id']).strip() for e in employees]
+    attendance_data = get_attendance_for_date(for_date_obj, emp_ids)
 
     rows = []
     serial = 1
     
     for emp in employees:
-        emp_id = str(emp['Emp_Id'])
+        emp_id = str(emp['Emp_Id']).strip()
         
         # Skip Security personnel as they are restricted from these reports
         sec = (emp.get('Section') or '').strip().lower()
@@ -148,13 +160,30 @@ def compute_present_status(for_date: str, section: str | None, sub_section: str 
             continue
 
         stats = attendance_data.get(emp_id)
-        
-        # Skip if no attendance data at all
-        if not stats or (not stats.get('in_time') and not stats.get('out_time')):
-            continue
+        in_dt = stats.get('in_time') if stats else None
+        out_dt = stats.get('out_time') if stats else None
 
-        in_dt = stats.get('in_time')
-        out_dt = stats.get('out_time')
+        # Determine Status
+        emp_status = 'absent'
+        if in_dt and out_dt:
+            emp_status = 'complete'
+        elif in_dt or out_dt:
+            emp_status = 'incomplete'
+        
+        # Apply Status Filter
+        if status == 'all':
+            # 'all' traditionally means 'present' (at least one punch) in this report
+            if emp_status == 'absent':
+                continue
+        elif status == 'absent':
+            if emp_status != 'absent':
+                continue
+        elif status == 'incomplete':
+            if emp_status != 'incomplete':
+                continue
+        elif status == 'complete':
+            if emp_status != 'complete':
+                continue
 
         # Show RAW Times directly from database
         disp_in = in_dt.strftime('%H:%M') if in_dt else "Missing"

@@ -48,10 +48,11 @@ def api_present_status():
     section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
+    status = data.get('status', 'all')
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     try:
-        rows = compute_present_status(for_date, section, sub_section, category)
+        rows = compute_present_status(for_date, section, sub_section, category, status)
         return jsonify({'date': for_date, 'rows': rows})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -104,10 +105,11 @@ def present_status_pdf():
     section = data.get('section')
     sub_section = data.get('sub_section')
     category = data.get('category')
+    status = data.get('status', 'all')
     if not for_date:
         return jsonify({'error': 'date is required'}), 400
     
-    rows = compute_present_status(for_date, section, sub_section, category)
+    rows = compute_present_status(for_date, section, sub_section, category, status)
     
     grouped_rows = defaultdict(list)
     for r in rows:

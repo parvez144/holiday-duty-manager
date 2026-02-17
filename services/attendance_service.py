@@ -55,6 +55,24 @@ def get_attendance_for_date(report_date, emp_ids=None):
     
     return final_data
 
+def add_manual_punch(emp_code, punch_time):
+    """
+    Adds a manual punch record to the local database.
+    
+    :param emp_code: Employee ID string
+    :param punch_time: datetime object
+    """
+    new_punch = IClockTransaction(
+        emp_code=emp_code,
+        punch_time=punch_time,
+        is_corrected=True,
+        original_punch_time=punch_time,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(new_punch)
+    db.session.commit()
+    return new_punch
+
 if __name__ == "__main__":
     # To run this standalone, we need to setup the app context
     from app import app

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Attendance - {{ system.company.name }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--single {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            height: 45px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--text);
+            padding-left: 0.75rem;
+        }
+
+        .select2-dropdown {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            backdrop-filter: blur(12px);
+        }
+
+        .select2-results__option {
+            padding: 0.75rem;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--primary);
+        }
+
+        .select2-search--dropdown .select2-search__field {
+            background-color: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 0.25rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .alert-banner {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .info-box {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--border);">
+            <div class="logo"
+                style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
+                    style="height: 40px; width: auto; object-fit: contain;">
+                <span>{{ system.company.name }}</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted);">
+                <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
+                    title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </header>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <h1>Manual Attendance Entry</h1>
+        <p class="subtitle">Select an employee and enter the punch time manually.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-banner alert-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="controls">
+            <form action="{{ url_for('attendance_mgmt.manual_entry') }}" method="POST">
+                <div class="filters-row">
+                    <div class="control-group" style="grid-column: span 2;">
+                        <label>Select Employee</label>
+                        <select name="emp_code" class="select2-select" required>
+                            <option value="">Search by ID or Name...</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.Emp_Id }}">{{ emp.Emp_Id }} - {{ emp.Emp_Name }} ({{ emp.Section }})
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <div id="status-card" class="info-box"
+                            style="display: none; margin-top: 1.5rem; border-color: var(--primary-light); background: rgba(99, 102, 241, 0.05);">
+                            <div
+                                style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                <div>
+                                    <span
+                                        style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Current
+                                        Punches:</span>
+                                    <div style="display: flex; gap: 1.5rem; font-weight: 600;">
+                                        <span style="font-size: 0.875rem;">In: <span id="current-in"
+                                                style="color: var(--primary-light);">---</span></span>
+                                        <span style="font-size: 0.875rem;">Out: <span id="current-out"
+                                                style="color: var(--primary-light);">---</span></span>
+                                    </div>
+                                </div>
+                                <div id="status-badge" class="badge"
+                                    style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    Checking...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filters-row" style="margin-top: 1.5rem;">
+                    <div class="control-group">
+                        <label>Punch Date</label>
+                        <input type="date" id="punch-date" name="date" value="{{ today }}" onclick="this.showPicker()"
+                            required>
+                    </div>
+                    <div class="control-group">
+                        <label>Punch Time</label>
+                        <input type="time" name="time" onclick="this.showPicker()" required>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="margin-top: 2rem;">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Save Manual Punch
+                    </button>
+                    <button type="reset" class="btn-outline">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-circle-info" style="color: var(--primary); margin-top: 0.25rem;"></i>
+            <div style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.6;">
+                <strong style="color: var(--text);">How it works:</strong>
+                <ul style="margin-top: 0.5rem; margin-left: 1.25rem;">
+                    <li>Manual punches are stored in the local <strong>mfl</strong> database.</li>
+                    <li>These records will automatically appear in all payment and attendance reports.</li>
+                    <li>The system will treat these as regular punches based on the 1:00 PM (In/Out) rule.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const empSelect = $('.select2-select');
+            const dateInput = $('#punch-date');
+
+            empSelect.select2({
+                placeholder: "Search by ID or Name...",
+                allowClear: true,
+                width: '100%'
+            });
+
+            function checkStatus() {
+                const empId = empSelect.val();
+                const date = dateInput.val();
+
+                if (empId && date) {
+                    $('#status-card').show();
+                    $('#status-emp-id').text(empId);
+                    $('#status-date').text(date);
+                    $('#current-in').text('...');
+                    $('#current-out').text('...');
+                    $('#status-badge').text('Checking...');
+
+                    $.get("{{ url_for('attendance_mgmt.get_attendance_status') }}", { emp_code: empId, date: date }, function (data) {
+                        $('#current-in').text(data.in_time);
+                        $('#current-out').text(data.out_time);
+
+                        if (data.in_time === "Missing" || data.out_time === "Missing") {
+                            $('#status-badge').text('Incomplete').css({ 'background': 'rgba(239, 68, 68, 0.1)', 'color': '#fca5a5', 'border-color': 'rgba(239, 68, 68, 0.2)' });
+                        } else {
+                            $('#status-badge').text('Complete').css({ 'background': 'rgba(16, 185, 129, 0.1)', 'color': '#6ee7b7', 'border-color': 'rgba(16, 185, 129, 0.2)' });
+                        }
+                    });
+                } else {
+                    $('#status-card').hide();
+                }
+            }
+
+            empSelect.on('change', checkStatus);
+            dateInput.on('change', checkStatus);
+        });
+    </script>
+</body>
+
+</html>

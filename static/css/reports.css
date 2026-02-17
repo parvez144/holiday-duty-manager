@@ -112,8 +112,9 @@ select:focus {
   border-color: var(--primary);
 }
 
-/* Style the calendar icon for date inputs */
-input[type="date"]::-webkit-calendar-picker-indicator {
+/* Style the calendar/clock icon for date and time inputs */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
   opacity: 0.8;

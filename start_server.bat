@@ -6,5 +6,5 @@ echo Starting Attendance Sync...
 start "Attendance Sync" venv\Scripts\python sync_data.py --loop
 
 echo Starting Web Server...
-python serve.py
+venv\Scripts\python serve.py
 pause

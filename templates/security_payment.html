@@ -11,8 +11,37 @@
 </head>
 
 <body>
-    <h1>Security Holiday Payment - Coming Soon</h1>
-    <a href="{{ url_for('main.index') }}">Back to Dashboard</a>
+    <div class="container">
+        <header
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--border);">
+            <div class="logo"
+                style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
+                    style="height: 40px; width: auto; object-fit: contain;">
+                <span>{{ system.company.name }}</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted);">
+                <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
+                    title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </header>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <h1>Security Holiday Payment</h1>
+        <p class="subtitle">Manage holiday payments for security personnel. (Coming Soon)</p>
+
+        <div class="empty-state">
+            <i class="fas fa-shield-halved fa-3x"
+                style="margin-bottom: 1.5rem; color: var(--primary); opacity: 0.5;"></i>
+            <p>This module is currently under development. Please check back later.</p>
+        </div>
+    </div>
 </body>
 
 </html>

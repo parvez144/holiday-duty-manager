@@ -57,21 +57,43 @@ def get_attendance_for_date(report_date, emp_ids=None):
 
 def add_manual_punch(emp_code, punch_time):
     """
-    Adds a manual punch record to the local database.
-    
-    :param emp_code: Employee ID string
-    :param punch_time: datetime object
+    Adds or updates a manual punch record.
+    If a manual punch (is_corrected=True) already exists for the same employee,
+    date, and session (Morning < 1PM, Afternoon >= 1PM), it updates it.
     """
-    new_punch = IClockTransaction(
-        emp_code=emp_code,
-        punch_time=punch_time,
-        is_corrected=True,
-        original_punch_time=punch_time,
-        created_at=datetime.utcnow()
+    report_date = punch_time.date()
+    is_morning = punch_time.hour < 13
+
+    # Check for existing manual punch in the same session
+    existing_query = IClockTransaction.query.filter(
+        IClockTransaction.emp_code == emp_code,
+        func.date(IClockTransaction.punch_time) == report_date,
+        IClockTransaction.is_corrected == True
     )
-    db.session.add(new_punch)
-    db.session.commit()
-    return new_punch
+
+    if is_morning:
+        existing_query = existing_query.filter(func.hour(IClockTransaction.punch_time) < 13)
+    else:
+        existing_query = existing_query.filter(func.hour(IClockTransaction.punch_time) >= 13)
+
+    existing_punch = existing_query.first()
+
+    if existing_punch:
+        # Update existing record
+        existing_punch.punch_time = punch_time
+        existing_punch.updated_at = datetime.now()
+        db.session.commit()
+        return existing_punch, "updated"
+    else:
+        # Create new record
+        new_punch = IClockTransaction(
+            emp_code=emp_code,
+            punch_time=punch_time,
+            is_corrected=True
+        )
+        db.session.add(new_punch)
+        db.session.commit()
+        return new_punch, "created"
 
 if __name__ == "__main__":
     # To run this standalone, we need to setup the app context

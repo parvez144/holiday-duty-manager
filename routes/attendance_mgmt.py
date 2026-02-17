@@ -22,16 +22,42 @@ def manual_entry():
             
         try:
             punch_time = datetime.strptime(f"{date_str} {time_str}", '%Y-%m-%d %H:%M')
-            add_manual_punch(emp_code, punch_time)
-            flash(f'Manual punch added for {emp_code} at {punch_time.strftime("%Y-%m-%d %I:%M %p")}', 'success')
+            punch, status = add_manual_punch(emp_code, punch_time)
+            
+            if status == "updated":
+                flash(f'Manual punch updated for {emp_code} at {punch_time.strftime("%I:%M %p")}', 'success')
+            else:
+                flash(f'Manual punch added for {emp_code} at {punch_time.strftime("%I:%M %p")}', 'success')
         except Exception as e:
-            flash(f'Error adding punch: {str(e)}', 'danger')
+            flash(f'Error saving punch: {str(e)}', 'danger')
             
         return redirect(url_for('attendance_mgmt.manual_entry'))
 
     employees = get_employees()
+    
+    # Fetch recent manual entries
+    from models.attendance import IClockTransaction
+    recent_entries = IClockTransaction.query.filter_by(is_corrected=True).order_by(IClockTransaction.updated_at.desc()).limit(10).all()
+    
     today = datetime.now().strftime('%Y-%m-%d')
-    return render_template('manual_attendance.html', employees=employees, today=today)
+    return render_template('manual_attendance.html', employees=employees, today=today, recent_entries=recent_entries)
+
+@attendance_mgmt_bp.route('/attendance/manual/delete/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_manual_punch(id):
+    from models.attendance import IClockTransaction
+    punch = IClockTransaction.query.get(id)
+    if punch and punch.is_corrected:
+        try:
+            db.session.delete(punch)
+            db.session.commit()
+            flash('Manual punch deleted successfully.', 'success')
+        except Exception as e:
+            flash(f'Error deleting punch: {str(e)}', 'danger')
+    else:
+        flash('Punch record not found or not a manual entry.', 'danger')
+    return redirect(url_for('attendance_mgmt.manual_entry'))
 
 @attendance_mgmt_bp.route('/api/attendance/status')
 @login_required

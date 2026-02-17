@@ -13,8 +13,8 @@ class IClockTransaction(db.Model):
     sync_id = db.Column(db.Integer, unique=True, nullable=True) # Original ID from BioTime
     is_corrected = db.Column(db.Boolean, default=False)
     original_punch_time = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     def __repr__(self):
         return f'<LocalPunch {self.emp_code} @ {self.punch_time}>'

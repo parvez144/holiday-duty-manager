@@ -16,49 +16,64 @@ class BioTimeTransaction(db.Model):
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def sync_attendance():
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+
+def sync_attendance(batch_size=1000):
     """
     Synchronizes punch data from BioTimeTransaction (remote) 
     to IClockTransaction (local).
+    Uses MySQL INSERT IGNORE for robustness against duplicates.
     """
     try:
-        # 1. Get the latest sync_id from local table
-        latest_sync = db.session.query(func.max(IClockTransaction.sync_id)).scalar()
-        if latest_sync is None:
-            latest_sync = 0
+        # Clear session to avoid stale data
+        db.session.expire_all()
         
-        logger.info(f"Starting sync from sync_id: {latest_sync}")
+        # 1. Get the latest sync_id from local table
+        latest_sync = db.session.query(func.max(IClockTransaction.sync_id)).scalar() or 0
+        
+        logger.info(f"Checking for new records starting from sync_id: {latest_sync}...")
 
-        # 2. Fetch new records from remote table
-        # We only sync 'id', 'emp_code', and 'punch_time'
-        new_records = BioTimeTransaction.query.filter(BioTimeTransaction.id > latest_sync).order_by(BioTimeTransaction.id).all()
+        # 2. Sync in batches
+        total_synced = 0
+        while True:
+            # Fetch a batch of records from remote
+            new_records = BioTimeTransaction.query.filter(
+                BioTimeTransaction.id > latest_sync
+            ).order_by(BioTimeTransaction.id).limit(batch_size).all()
 
-        if not new_records:
-            logger.info("No new records to sync.")
-            return 0
+            if not new_records:
+                break
 
-        # 3. Bulk insert into local table
-        sync_count = 0
-        for record in new_records:
-            # Check if this sync_id already exists (sanity check)
-            existing = IClockTransaction.query.filter_by(sync_id=record.id).first()
-            if not existing:
-                local_record = IClockTransaction(
-                    emp_code=record.emp_code,
-                    punch_time=record.punch_time,
-                    sync_id=record.id,
-                    original_punch_time=record.punch_time
-                )
-                db.session.add(local_record)
-                sync_count += 1
+            # Use MySQL-specific INSERT IGNORE via prefix_with if using standard insert
+            # Or use on_duplicate_key_update
             
-            # Flush every 100 records to keep memory usage low
-            if sync_count % 100 == 0:
-                db.session.flush()
+            mappings = []
+            for record in new_records:
+                mappings.append({
+                    'emp_code': record.emp_code,
+                    'punch_time': record.punch_time,
+                    'sync_id': record.id,
+                    'original_punch_time': record.punch_time
+                })
+                latest_sync = record.id
 
-        db.session.commit()
-        logger.info(f"Successfully synced {sync_count} new records.")
-        return sync_count
+            # Execute bulk insert with ignore
+            stmt = mysql_insert(IClockTransaction).values(mappings)
+            # This will skip duplicates based on sync_id (unique constraint)
+            stmt = stmt.on_duplicate_key_update(sync_id=IClockTransaction.sync_id) 
+            
+            db.session.execute(stmt)
+            db.session.commit()
+            
+            total_synced += len(new_records)
+            logger.info(f"Processed {total_synced} records (Latest Sync ID: {latest_sync})")
+
+        if total_synced == 0:
+            logger.info("No new records to sync.")
+        else:
+            logger.info(f"Sync complete. Total processed: {total_synced}")
+            
+        return total_synced
 
     except Exception as e:
         db.session.rollback()

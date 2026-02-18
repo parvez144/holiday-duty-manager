@@ -281,10 +281,11 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
             amount = decimal_hours * hourly_rate
             rate_type = "OT Rate"
         else:
-            # Staff: Based on Designation rate (Assuming Designation Rate is for 1 hour or treating it as hourly)
-            hourly_rate = designation_rates.get(designation, 0)
-            amount = decimal_hours * hourly_rate
-            rate_type = "Designation Rate"
+            # Staff: Fixed amount based on Designation (NOT proportional)
+            # Rule: If eligible (stayed past 10:30 PM), they get the full designation rate
+            amount = designation_rates.get(designation, 0)
+            hourly_rate = amount # For display in 'Rate' column
+            rate_type = "Fixed Rate"
 
         if amount > 0:
             rows.append({

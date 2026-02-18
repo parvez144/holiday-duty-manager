@@ -2,7 +2,7 @@ from datetime import datetime
 from collections import defaultdict
 from services.employee_service import get_employees
 from services.attendance_service import get_attendance_for_date
-from models.night_bill_rate import NightBillRate
+from models.designation import Designation
 
 def compute_payment_sheet(for_date: str, section: str | None, sub_section: str | None, category: str | None):
     """Compute payment sheet rows for a given date and optional filters."""
@@ -216,8 +216,8 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
     attendance_data = get_attendance_for_date(for_date, emp_ids)
 
     # 3. Fetch Night Bill Rates for Staff (Designation based)
-    rates_query = NightBillRate.query.all()
-    designation_rates = {r.designation.lower().strip(): r.rate for r in rates_query}
+    rates_query = Designation.query.all()
+    designation_rates = {r.designation.lower().strip(): r.night_bill for r in rates_query}
 
     rows = []
     serial = 1

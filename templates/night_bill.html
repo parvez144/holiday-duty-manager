@@ -32,15 +32,85 @@
         <a href="/" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
-
         <h1>Night Bill</h1>
-        <p class="subtitle">Generate night bill reports for employees. (Coming Soon)</p>
+        <p class="subtitle">Generate night bill reports for employees who work late (at or after 10:30 PM).</p>
 
-        <div class="empty-state">
-            <i class="fas fa-moon fa-3x" style="margin-bottom: 1.5rem; color: var(--primary); opacity: 0.5;"></i>
-            <p>This module is currently under development. Please check back later.</p>
+        <div class="controls">
+            <div class="filters-row">
+                <div class="control-group">
+                    <label for="date-select">Date</label>
+                    <input type="date" id="date-select" value="{{ today }}">
+                </div>
+                <div class="control-group">
+                    <label for="section-select">Section</label>
+                    <select id="section-select">
+                        <option value="">All Sections</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="sub-section-select">Sub-Section</label>
+                    <select id="sub-section-select">
+                        <option value="">All Sub-Sections</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="category-select">Category</label>
+                    <select id="category-select">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button id="btn-fetch" class="btn-primary">
+                    <div class="spinner" id="fetch-spinner"></div>
+                    <i class="fas fa-chart-bar"></i>
+                    Generate Report
+                </button>
+                <button id="btn-pdf" class="btn-outline">
+                    <i class="fas fa-print"></i>
+                    Print
+                </button>
+            </div>
         </div>
+
+        <div class="table-container">
+            <table id="report-table">
+                <thead>
+                    <tr>
+                        <th>SL</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th>Gross</th>
+                        <th>Out Time</th>
+                        <th>Hour</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="report-body">
+                    <tr>
+                        <td colspan="9" class="empty-state">Select filters and generate report to see data.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="app-footer no-print">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
+                    }}-{% endif %}{{ system.copyright.year }}
+                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                </div>
+                <div class="developer-info">
+                    {{ system.developer.text }}
+                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name }}</a>
+                </div>
+            </div>
+        </footer>
     </div>
+    <script src="{{ url_for('static', filename='js/night_bill.js') }}"></script>
 </body>
 
 </html>

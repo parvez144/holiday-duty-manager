@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Night Bill Sheet - {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%B-%Y') }}</title>
+    <style>
+        /* ==================================
+           PAGE SETUP & WEASYPRINT EXTENSIONS
+           ================================== */
+        @page {
+            size: A4 portrait;
+            margin: 0.2in;
+            margin-top: 0.4in;
+            margin-bottom: 1.0in;
+
+            /* WeasyPrint: footer content each page */
+            @bottom-center {
+                content: element(footer);
+                width: 100%;
+                font-size: 8pt;
+                margin-bottom: 0.1in;
+            }
+
+            /* WeasyPrint: automatic page numbering */
+            @top-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                font-weight: bold;
+                padding-top: 0.1in;
+                padding-right: 0.4in;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ===========
+           HEADER
+           =========== */
+        .header {
+            text-align: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .header h1 {
+            font-size: 14pt;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .header p {
+            font-size: 9pt;
+            margin: 0;
+        }
+
+        .header-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 4px 0 8px 0;
+        }
+
+        /* ===========
+           SUB HEADER
+           =========== */
+        .sub-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 10pt;
+            margin-bottom: 3px;
+        }
+
+        /* ===========
+           TABLE
+           =========== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 6px;
+        }
+
+        /* WeasyPrint: table header each page */
+        thead {
+            display: table-header-group;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 2px 3px;
+            line-height: 1.1;
+            height: 0.45in;
+            vertical-align: middle;
+            font-size: 7.5pt;
+            word-wrap: break-word;
+        }
+
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+            font-size: 8pt;
+            text-align: center;
+            height: 10px;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        /* Column Widths (Adjusted for Night Bill - 10 columns) */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 4%;
+        }
+
+        /* SI */
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 7%;
+        }
+
+        /* ID */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 19%;
+        }
+
+        /* Name */
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 14%;
+        }
+
+        /* Designation */
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 8%;
+        }
+
+        /* Gross */
+        th:nth-child(6),
+        td:nth-child(6) {
+            width: 8%;
+        }
+
+        /* Out Time */
+        th:nth-child(7),
+        td:nth-child(7) {
+            width: 6%;
+        }
+
+        /* Hour */
+        th:nth-child(8),
+        td:nth-child(8) {
+            width: 7%;
+        }
+
+        /* Rate */
+        th:nth-child(9),
+        td:nth-child(9) {
+            width: 8%;
+        }
+
+        /* Amount */
+        th:nth-child(10),
+        td:nth-child(10) {
+            width: auto;
+        }
+
+        /* Signature */
+
+        /* ===========
+           SUBTOTAL ROW
+           =========== */
+        .sub-total-row td {
+            border-top: none;
+            font-size: 8pt;
+            font-weight: bold;
+            height: 24px;
+            line-height: normal;
+            vertical-align: middle;
+        }
+
+        .sub-total-row .total-count {
+            text-align: left;
+        }
+
+        .sub-total-row .total-amount {
+            text-align: right;
+        }
+
+        /* ===========
+           FOOTER (SIGNATURES)
+           =========== */
+        #footer {
+            position: running(footer);
+        }
+
+        .footer {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            text-align: center;
+            padding: 10px 0 0 0;
+            box-sizing: border-box;
+        }
+
+        .footer-item {
+            width: 15%;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+
+        .page-content {
+            margin-bottom: 0.5in;
+        }
+
+        /* Page break between sections */
+        .section {
+            page-break-after: always;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- footer first define -->
+    <div id="footer">
+        <div class="footer">
+            <div class="footer-item">Prepared By</div>
+            <div class="footer-item">Accounts Officer</div>
+            <div class="footer-item">Sr. Accounts Officer</div>
+            <div class="footer-item">HR Department</div>
+            <div class="footer-item">General Manager</div>
+            <div class="footer-item">F. Director</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>{{ system.company.name|upper }}</h1>
+        <p>{{ system.company.address }}</p>
+        <div class="header-title">
+            Night Bill Payment Sheet
+            <br>
+            <p style="font-size: 10pt;">For the date of {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%d %B %Y')
+                }}</p>
+        </div>
+    </div>
+
+    <div class="page-content">
+        {% for section_name, rows in grouped_rows.items() %}
+        {% set total_employees = rows|length %}
+        {% set total_amount = rows|map(attribute='amount')|sum %}
+
+        <div class="sub-header">
+            <span class="sub-header-left">Section: {{ section_name }}</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>SI</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Designation</th>
+                    <th>Gross</th>
+                    <th>Out Time</th>
+                    <th>Hour</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                    <th>Signature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td class="center">{{ row.sl }}</td>
+                    <td class="center" style="font-weight: bold;">{{ row.id }}</td>
+                    <td>{{ row.name|title }}</td>
+                    <td>{{ row.designation }}</td>
+                    <td class="right">{{ row.gross|round(0)|int }}</td>
+                    <td class="center">{{ row.out_time }}</td>
+                    <td class="center">{{ row.hour }}</td>
+                    <td class="right">{{ row.rate|round(2) }}</td>
+                    <td class="right" style="font-weight: bold;">{{ row.amount|round(0)|int }}</td>
+                    <td class="center"></td>
+                </tr>
+                {% endfor %}
+
+                <tr class="sub-total-row">
+                    <td colspan="8" class="total-count">Sub Total : {{ total_employees }}</td>
+                    <td class="total-amount">{{ total_amount|round(0)|int }}</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        {% if not loop.last %}
+        <div class="section"></div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</body>
+
+</html>

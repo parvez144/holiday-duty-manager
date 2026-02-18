@@ -2,6 +2,7 @@ from datetime import datetime
 from collections import defaultdict
 from services.employee_service import get_employees
 from services.attendance_service import get_attendance_for_date
+from models.night_bill_rate import NightBillRate
 
 def compute_payment_sheet(for_date: str, section: str | None, sub_section: str | None, category: str | None):
     """Compute payment sheet rows for a given date and optional filters."""
@@ -200,5 +201,112 @@ def compute_present_status(for_date: str, section: str | None, sub_section: str 
             'remarks': ''
         })
         serial += 1
+
+    return rows
+
+def compute_night_bill(for_date: str, section: str | None, sub_section: str | None, category: str | None):
+    """Compute night bill rows for a given date and optional filters."""
+    # 1. Fetch Employees
+    employees = get_employees(section=section, sub_section=sub_section, category=category)
+    if not employees:
+        return []
+
+    # 2. Fetch Attendance
+    emp_ids = [str(e['Emp_Id']) for e in employees]
+    attendance_data = get_attendance_for_date(for_date, emp_ids)
+
+    # 3. Fetch Night Bill Rates for Staff (Designation based)
+    rates_query = NightBillRate.query.all()
+    designation_rates = {r.designation.lower().strip(): r.rate for r in rates_query}
+
+    rows = []
+    serial = 1
+    
+    for emp in employees:
+        emp_id = str(emp['Emp_Id'])
+        
+        # Skip Security personnel
+        sec = (emp.get('Section') or '').strip().lower()
+        sub_sec = (emp.get('Sub_Section') or '').strip().lower()
+        if sec == 'security' or sub_sec == 'security':
+            continue
+
+        stats = attendance_data.get(emp_id)
+        if not stats:
+            continue
+
+        out_dt = stats.get('out_time')
+        # Rule: Out-time must be at or after 10:30 PM (22:30)
+        # But calculation starts from 10:00 PM (22:00)
+        if not out_dt:
+            continue
+            
+        # Time past 10 PM in minutes
+        # out_dt is the punch datetime
+        ref_time = out_dt.replace(hour=22, minute=0, second=0, microsecond=0)
+        if out_dt <= ref_time:
+            continue
+            
+        diff = out_dt - ref_time
+        total_minutes = int(diff.total_seconds() / 60)
+        
+        # Requirement: at least 30 minutes duty after 10 PM to be ELIGIBLE
+        if total_minutes < 30:
+            continue
+
+        disp_in = stats.get('in_time').strftime('%H:%M') if stats.get('in_time') else "Missing"
+        disp_out = out_dt.strftime('%H:%M')
+        
+        # Duration string for display (H:MM)
+        hours_part = total_minutes // 60
+        mins_part = total_minutes % 60
+        disp_duration = f"{hours_part}:{mins_part:02d}"
+        decimal_hours = total_minutes / 60.0
+
+        # Calculation
+        emp_cat = (emp.get('Category') or '').strip().lower()
+        designation = (emp.get('Designation') or '').strip().lower()
+        
+        gross_salary = float(emp.get('Gross_Salary') or 0)
+        basic_salary = (gross_salary - 2450) / 1.5
+        
+        amount = 0
+        rate_type = ""
+        hourly_rate = 0
+        
+        if 'worker' in emp_cat:
+            # Workers: Based on OT rate (proportional)
+            ot_rate_unit = (basic_salary / 208.0) * 2.0
+            hourly_rate = ot_rate_unit
+            amount = decimal_hours * hourly_rate
+            rate_type = "OT Rate"
+        else:
+            # Staff: Based on Designation rate (Assuming Designation Rate is for 1 hour or treating it as hourly)
+            hourly_rate = designation_rates.get(designation, 0)
+            amount = decimal_hours * hourly_rate
+            rate_type = "Designation Rate"
+
+        if amount > 0:
+            rows.append({
+                'sl': serial,
+                'id': emp_id,
+                'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
+                'designation': emp['Designation'].title() if emp['Designation'] else '',
+                'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
+                'section': emp['Section'].title() if emp['Section'] else '',
+                'category': emp.get('Category', ''),
+                'gross': round(gross_salary, 0),
+                'basic': round(basic_salary, 0),
+                'hour': disp_duration,
+                'decimal_hour': round(decimal_hours, 2),
+                'rate': round(hourly_rate, 2),
+                'in_time': disp_in,
+                'out_time': disp_out,
+                'rate_type': rate_type,
+                'amount': round(amount, 0),
+                'remarks': '',
+                'signature': ''
+            })
+            serial += 1
 
     return rows

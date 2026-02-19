@@ -13,12 +13,14 @@
         :root {
             --primary: #6366f1;
             --primary-light: #818cf8;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --bg: #0b1120;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --card-hover: rgba(30, 41, 59, 0.7);
             --text: #f1f5f9;
             --text-muted: #94a3b8;
-            --border: rgba(51, 65, 85, 0.5);
+            --border: rgba(255, 255, 255, 0.08);
             --accent: #10b981;
+            --sidebar-width: 280px;
         }
 
         * {
@@ -31,17 +33,18 @@
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg);
             background-image:
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(192, 132, 252, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(192, 132, 252, 0.1) 0px, transparent 50%);
             color: var(--text);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            line-height: 1.5;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
             width: 100%;
@@ -51,21 +54,22 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 4rem;
-            padding: 1.5rem;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border-radius: 1.5rem;
+            margin-bottom: 3rem;
+            padding: 1.25rem 2rem;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 1.25rem;
             border: 1px solid var(--border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
             font-size: 1.5rem;
             font-weight: 600;
-            background: linear-gradient(to right, #818cf8, #c084fc);
+            background: linear-gradient(135deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -74,189 +78,217 @@
         .user-profile {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
             color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            display: block;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.2);
         }
 
         .hero {
-            text-align: center;
-            margin-bottom: 5rem;
+            margin-bottom: 4rem;
         }
 
         .hero h1 {
             font-size: 3.5rem;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 1rem;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.03em;
+            background: linear-gradient(to bottom, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .hero p {
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             color: var(--text-muted);
             max-width: 600px;
-            margin: 0 auto;
+        }
+
+        /* Section Layout */
+        .dashboard-section {
+            margin-bottom: 4rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .section-line {
+            height: 1px;
+            flex-grow: 1;
+            background: linear-gradient(to right, var(--border), transparent);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
         }
 
         .card {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            padding: 2.5rem;
-            border-radius: 2rem;
+            backdrop-filter: blur(12px);
+            padding: 2rem;
+            border-radius: 1.5rem;
             border: 1px solid var(--border);
             text-decoration: none;
             color: inherit;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 1.25rem;
             position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
+            z-index: 1;
         }
 
         .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            border-color: var(--primary-light);
-            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
-            background: rgba(30, 41, 59, 0.9);
-        }
-
-        .card:hover::before {
-            transform: translateX(100%);
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-
-            100% {
-                transform: translateY(0px);
-            }
-        }
-
-        .hero h1 {
-            animation: float 4s ease-in-out infinite;
+            transform: translateY(-5px);
+            background: var(--card-hover);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
         }
 
         .card-icon {
-            width: 65px;
-            height: 65px;
-            background: rgba(99, 102, 241, 0.1);
-            border-radius: 1.25rem;
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             color: var(--primary-light);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid transparent;
+            transition: all 0.3s;
         }
 
         .card:hover .card-icon {
             background: var(--primary);
             color: white;
-            transform: rotate(10deg) scale(1.1);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
         .card-content h3 {
-            font-size: 1.6rem;
+            font-size: 1.25rem;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            color: var(--text);
         }
 
         .card-content p {
             color: var(--text-muted);
-            line-height: 1.7;
-            font-size: 0.95rem;
-        }
-
-        .card-footer {
-            margin-top: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 600;
-            color: var(--primary-light);
             font-size: 0.9rem;
-            letter-spacing: 0.02em;
+            line-height: 1.6;
         }
 
-        .card-footer i {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card:hover .card-footer i {
-            transform: translateX(10px);
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 4rem;
-        }
-
-        .stat-item {
-            background: rgba(15, 23, 42, 0.4);
-            padding: 1.5rem;
-            border-radius: 1.25rem;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 600;
-            color: var(--primary-light);
-            display: block;
-        }
-
-        .stat-label {
+        .card-arrow {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
             color: var(--text-muted);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s;
         }
 
-        footer {
+        .card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(0);
+            color: var(--primary-light);
+        }
+
+        .app-footer {
             margin-top: auto;
             padding: 3rem 0;
-            text-align: center;
+            border-top: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             color: var(--text-muted);
             font-size: 0.875rem;
+        }
+
+        .footer-left strong {
+            color: var(--text);
+        }
+
+        .footer-right a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-right a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
             .hero h1 {
                 font-size: 2.5rem;
             }
 
-            .container {
-                padding: 1rem;
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
             }
         }
     </style>
@@ -267,207 +299,145 @@
         <header>
             <div class="logo">
                 <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
-                    style="height: 50px; width: auto; object-fit: contain;">
+                    style="height: 48px; width: auto; object-fit: contain;">
                 <span>{{ system.company.name }}</span>
             </div>
             <div class="user-profile">
-                <span>Welcome back, {{ current_user.name }}</span>
-                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
-                    title="Logout">
-                    <i class="fas fa-sign-out-alt fa-lg"></i>
+                <div class="user-info">
+                    <span class="user-name">{{ current_user.name }}</span>
+                    <span style="font-size: 0.75rem;">Administrator</span>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
                 </a>
             </div>
         </header>
 
         <section class="hero">
-            <h1>Effortless management of <br>Holiday Duties.</h1>
-            <p>Select a module below to start managing holiday duties, generate reports, and check attendance data
-                across systems.</p>
+            <h1>Holiday Duty <br>Management System.</h1>
+            <p>Select a module from the categories below to manage payments, monitor attendance, and streamline
+                administrative tasks.</p>
         </section>
 
-        <div class="grid">
-            <a href="{{ url_for('holiday_reports.reports_page') }}" class="card">
-                <div class="card-icon">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Holiday Payment </h3>
-                    <p>Generate automated payment sheets for staff and worker, sync attendance logs, and export reports to PDF or Excel
-                        formats.</p>
-                </div>
-                <div class="card-footer">
-                    Manage Reports <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
+        <!-- Payment & Billing Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <i class="fas fa-wallet" style="color: #fbbf24;"></i>
+                <h2>Payment Systems</h2>
+                <div class="section-line"></div>
+            </div>
+            <div class="grid">
+                <a href="{{ url_for('holiday_reports.reports_page') }}" class="card">
+                    <div class="card-icon" style="color: #fbbf24;">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>Holiday Payment</h3>
+                        <p>Generate automated payment sheets for staff and workers. Sync logs and export to PDF/Excel.
+                        </p>
+                    </div>
+                </a>
 
-            <a href="{{ url_for('night_bill.night_bill_page') }}" class="card">
-                <div class="card-icon">
-                    <i class="fas fa-cloud-moon"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Night Bill <br> Coming soon</h3>
-                    <p>Generate night bill for employees.</p>
-                </div>
-                <div class="card-footer">
-                    Generate Night Bill <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
+                <a href="{{ url_for('night_bill.night_bill_page') }}" class="card">
+                    <div class="card-icon" style="color: #818cf8;">
+                        <i class="fas fa-cloud-moon"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>Night Bill Management</h3>
+                        <p>Track late-night shifts and generate bills for eligible employees (After 10:30 PM).</p>
+                    </div>
+                </a>
 
-            <a href="{{ url_for('holiday_reports.present_status_page') }}" class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-users-between-lines"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Employee's Present Status</h3>
-                    <p>Check present status of employees.</p>
-                </div>
-                <div class="card-footer">
-                    Check Present Status <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <a href="{{ url_for('security_payment.security_payment_page') }}" class="card">
-                <div class="card-icon">
-                    <i class="fa-solid fa-person-military-rifle"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Security Holiday Payment</h3>
-                    <p>Generate holiday payments for security personnel based on attendance.</p>
-                </div>
-                <div class="card-footer">
-                    Generate Security Holiday Payment <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            {% if current_user.role == 'Admin' %}
-            <a href="/users" class="card">
-                <div class="card-icon" style="color: #c084fc; background: rgba(192, 132, 252, 0.1);">
-                    <i class="fas fa-user-gear"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Manage Users</h3>
-                    <p>Add new users, change roles, or remove access for existing accounts.</p>
-                </div>
-                <div class="card-footer" style="color: #c084fc;">
-                    User Settings <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-            <a href="{{ url_for('attendance_mgmt.manual_entry') }}" class="card">
-                <div class="card-icon" style="color: #fbbf24; background: rgba(251, 191, 36, 0.1);">
-                    <i class="fas fa-fingerprint"></i>
-                </div>
-                <div class="card-content">
-                    <h3>Manual Attendance</h3>
-                    <p>Add missing punch records manually for employees who forgot to punch. Records are stored locally.
-                    </p>
-                </div>
-                <div class="card-footer" style="color: #fbbf24;">
-                    Add Manual Punch <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-            {% endif %}
-
-            <!-- <div class="card" style="cursor: not-allowed; opacity: 0.8;">
-                <div class="card-icon" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">
-                    <i class="fas fa-sliders"></i>
-                </div>
-                <div class="card-content">
-                    <h3>System Settings</h3>
-                    <p>Coming soon: Configure database connections, holiday calendars, and global system preferences.
-                    </p>
-                </div>
-                <div class="card-footer" style="color: #94a3b8;">
-                    Locked Module <i class="fas fa-lock"></i>
-                </div>
-            </div> -->
+                <a href="{{ url_for('security_payment.security_payment_page') }}" class="card">
+                    <div class="card-icon" style="color: #ef4444;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>Security Payments</h3>
+                        <p>Dedicated payment generation for security personnel based on holiday duty attendance.</p>
+                    </div>
+                </a>
+            </div>
         </div>
 
-        <style>
-            .app-footer {
-                margin-top: auto;
-                padding: 2.5rem 0;
-                border-top: 1px solid var(--border);
-                background: rgba(15, 23, 42, 0.4);
-                backdrop-filter: blur(8px);
-                border-radius: 1.5rem 1.5rem 0 0;
-                position: relative;
-                z-index: 10;
-            }
+        <!-- Attendance & Monitoring -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <i class="fas fa-users-viewfinder" style="color: #10b981;"></i>
+                <h2>Attendance & Status</h2>
+                <div class="section-line"></div>
+            </div>
+            <div class="grid">
+                <a href="{{ url_for('holiday_reports.present_status_page') }}" class="card">
+                    <div class="card-icon" style="color: #10b981;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>Live Presence Status</h3>
+                        <p>Real-time view of department-wise employee presence and duty status.</p>
+                    </div>
+                </a>
 
-            .footer-content {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
-                text-align: center;
-            }
+                <a href="{{ url_for('attendance_mgmt.manual_entry') }}" class="card">
+                    <div class="card-icon" style="color: #f59e0b;">
+                        <i class="fas fa-keyboard"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>Manual Corrections</h3>
+                        <p>Add missing punch records or correct attendance logs for synchronized systems.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
 
-            .copyright {
-                color: var(--text-muted);
-                font-size: 0.9375rem;
-            }
+        <!-- Administration Section (Admin Only) -->
+        {% if current_user.role == 'Admin' %}
+        <div class="dashboard-section">
+            <div class="section-header">
+                <i class="fas fa-gear" style="color: #c084fc;"></i>
+                <h2>Systems & Admin</h2>
+                <div class="section-line"></div>
+            </div>
+            <div class="grid">
+                <a href="/users" class="card">
+                    <div class="card-icon" style="color: #c084fc;">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="card-arrow"><i class="fas fa-chevron-right"></i></div>
+                    <div class="card-content">
+                        <h3>User Account Control</h3>
+                        <p>Manage access levels, add system users, and monitor administrative activity.</p>
+                    </div>
+                </a>
 
-            .copyright strong {
-                color: var(--primary-light);
-                font-weight: 600;
-            }
-
-            .developer-info {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                font-size: 0.875rem;
-                color: var(--text-muted);
-            }
-
-            .developer-info a {
-                color: var(--text);
-                text-decoration: none;
-                font-weight: 600;
-                border-bottom: 2px solid var(--primary-light);
-                transition: all 0.2s;
-            }
-
-            .developer-info a:hover {
-                background: var(--primary-light);
-                color: var(--bg);
-            }
-
-            .version-badge {
-                padding: 0.25rem 0.5rem;
-                background: rgba(99, 102, 241, 0.1);
-                border: 1px solid var(--border);
-                border-radius: 0.5rem;
-                font-family: monospace;
-                font-weight: 600;
-                color: var(--primary-light);
-            }
-
-            @media print {
-                .no-print {
-                    display: none;
-                }
-            }
-
-            @media (min-width: 768px) {
-                .footer-content {
-                    flex-direction: row;
-                    justify-content: space-between;
-                    padding: 0 2rem;
-                }
-            }
-        </style>
-
-        <footer class="app-footer no-print">
-            <div class="footer-content">
-                <div class="copyright">
-                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
-                    }}-{% endif %}{{ system.copyright.year }}
-                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                <!-- Placeholder for future module -->
+                <div class="card" style="opacity: 0.6; cursor: default;">
+                    <div class="card-icon" style="color: #94a3b8;">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>System Configuration</h3>
+                        <p>Coming soon: Manage database connections and global holiday settings.</p>
+                    </div>
                 </div>
-                <div class="developer-info">
-                    {{ system.developer.text }}
-                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name}}</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    &copy; {{ system.copyright.year }} <strong>{{ system.copyright.holder }}</strong>. {{
+                    system.copyright.text }}
+                </div>
+                <div class="footer-right">
+                    {{ system.developer.text }} <a href="{{ system.developer.website }}" target="_blank">{{
+                        system.developer.name }}</a>
                 </div>
             </div>
         </footer>

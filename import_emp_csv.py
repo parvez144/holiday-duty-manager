@@ -53,68 +53,88 @@ try:
         Emp_Id INT PRIMARY KEY,
         Emp_Name VARCHAR(255),
         Join_Date DATE,
-        Sub_Section VARCHAR(100),
-        Section VARCHAR(100),
         Gross_Salary DECIMAL(15,2),
         Category VARCHAR(50),
         Grade VARCHAR(50),
         designation_id INT,
-        FOREIGN KEY (designation_id) REFERENCES designations(id)
+        sub_section_id INT,
+        FOREIGN KEY (designation_id) REFERENCES designations(id),
+        FOREIGN KEY (sub_section_id) REFERENCES sub_sections(id)
     )
     """)
     
-    # Try to add designation_id column if it doesn't exist (in case table already exists)
+    # Schema Update for existing table
     try:
-        cursor.execute("ALTER TABLE employees ADD COLUMN designation_id INT")
-        cursor.execute("ALTER TABLE employees ADD FOREIGN KEY (designation_id) REFERENCES designations(id)")
-        print("Added designation_id column to existing table.")
-    except mysql.connector.Error as err:
-        if err.errno == 1060: # Column already exists
-            pass
-        else:
-            print(f"Schema update info: {err}")
+        cursor.execute("ALTER TABLE employees ADD COLUMN sub_section_id INT")
+        cursor.execute("ALTER TABLE employees ADD FOREIGN KEY (sub_section_id) REFERENCES sub_sections(id)")
+        print("Added sub_section_id column.")
+    except mysql.connector.Error:
+        pass
 
-    # Fetch designations for lookup
+    # Fetch lookup data
     cursor.execute("SELECT id, designation FROM designations")
     desig_lookup = {d[1].strip().lower(): d[0] for d in cursor.fetchall()}
-    print(f"Loaded {len(desig_lookup)} designations for mapping.")
+    
+    cursor.execute("SELECT id, name FROM sections")
+    section_lookup = {s[1].strip().lower(): s[0] for s in cursor.fetchall()}
+    
+    cursor.execute("SELECT id, name, section_id FROM sub_sections")
+    subsection_lookup = {(ss[1].strip().lower(), ss[2]): ss[0] for ss in cursor.fetchall()}
 
-    print("Table checked/created successfully")
+    print(f"Lookups loaded: {len(desig_lookup)} desigs, {len(section_lookup)} sections.")
 
     # =====================
     # 4️⃣ From CSV to Database
     # =====================
-    # INSERT IGNORE used to prevent errors from duplicate Emp_Id
-    # ON DUPLICATE KEY UPDATE used to update existing records with new designation_id
     sql = """
-    INSERT INTO employees (Emp_Id, Emp_Name, Join_Date, Sub_Section, Section, Gross_Salary, Category, Grade, designation_id)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO employees (Emp_Id, Emp_Name, Join_Date, Gross_Salary, Category, Grade, designation_id, sub_section_id)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE 
         Emp_Name=VALUES(Emp_Name),
         Join_Date=VALUES(Join_Date),
-        Sub_Section=VALUES(Sub_Section),
-        Section=VALUES(Section),
         Gross_Salary=VALUES(Gross_Salary),
         Category=VALUES(Category),
         Grade=VALUES(Grade),
-        designation_id=VALUES(designation_id)
+        designation_id=VALUES(designation_id),
+        sub_section_id=VALUES(sub_section_id)
     """
     
     count = 0
     for _, row in df.iterrows():
+        # 1. Designation Lookup
         desig_name = str(row['Designation']).strip().lower()
         d_id = desig_lookup.get(desig_name)
         
+        # 2. Section/Sub-Section Lookup & Auto-creation
+        sec_name = str(row['Section']).strip()
+        sub_sec_name = str(row['Sub_Section']).strip()
+        
+        sec_key = sec_name.lower()
+        if sec_key not in section_lookup:
+            cursor.execute("INSERT INTO sections (name) VALUES (%s)", (sec_name,))
+            s_id = cursor.lastrowid
+            section_lookup[sec_key] = s_id
+        else:
+            s_id = section_lookup[sec_key]
+            
+        sub_key = (sub_sec_name.lower(), s_id)
+        if sub_key not in subsection_lookup:
+            cursor.execute("INSERT INTO sub_sections (name, section_id) VALUES (%s, %s)", (sub_sec_name, s_id))
+            ss_id = cursor.lastrowid
+            subsection_lookup[sub_key] = ss_id
+        else:
+            ss_id = subsection_lookup[sub_key]
+
+        # 3. Insert Employee
         cursor.execute(sql, (
             row['Emp_Id'],
             row['Emp_Name'],
             row['Join_Date'],
-            row['Sub_Section'],
-            row['Section'],
             row['Gross_Salary'],
             row['Category'],
             row['Grade'],
-            d_id
+            d_id,
+            ss_id
         ))
         if cursor.rowcount > 0:
             count += 1

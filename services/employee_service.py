@@ -1,26 +1,28 @@
 from models.employee import Employee
+from models.section import Section
+from models.sub_section import SubSection
 from extensions import db
 from sqlalchemy import distinct
+from sqlalchemy.orm import joinedload
 
 def get_employees(section=None, sub_section=None, category=None):
     """
     Fetches employees based on optional section, sub_section and category filters.
-    
-    :param section: Optional section to filter by.
-    :param sub_section: Optional sub-section to filter by.
-    :param category: Optional category to filter by.
-    :return: List of employee dictionaries.
     """
     query = Employee.query
     
-    # Use joinedload to efficiently fetch designation data
-    from sqlalchemy.orm import joinedload
-    query = query.options(joinedload(Employee.designation_rel))
+    # Efficiently fetch relationships
+    query = query.options(
+        joinedload(Employee.designation_rel),
+        joinedload(Employee.sub_section_rel).joinedload(SubSection.section_rel)
+    )
 
     if section:
-        query = query.filter(Employee.Section == section)
+        # Filter by Parent Section Name
+        query = query.join(Employee.sub_section_rel).join(SubSection.section_rel).filter(Section.name == section)
     if sub_section:
-        query = query.filter(Employee.Sub_Section == sub_section)
+        # Filter by SubSection Name
+        query = query.join(Employee.sub_section_rel).filter(SubSection.name == sub_section)
     if category:
         query = query.filter(Employee.Category == category)
     
@@ -31,44 +33,46 @@ def get_employees(section=None, sub_section=None, category=None):
         gross_val = float(emp.Gross_Salary or 0)
         daily_rate = round(gross_val / 30, 2)
         
-        # Merge designation properties if available
-        # This keeps the dictionary structure consistent with what reports expect
-        desig_info = "" 
-        grade_info = emp.Grade # Keep fallback for Grade if it's still in employees table
+        # Merge related data
+        desig_info = emp.designation_rel.designation if emp.designation_rel else ""
+        grade_info = emp.designation_rel.grade if emp.designation_rel else emp.Grade
         
-        if emp.designation_rel:
-            desig_info = emp.designation_rel.designation
-            grade_info = emp.designation_rel.grade
+        sec_info = ""
+        sub_sec_info = ""
+        if emp.sub_section_rel:
+            sub_sec_info = emp.sub_section_rel.name
+            if emp.sub_section_rel.section_rel:
+                sec_info = emp.sub_section_rel.section_rel.name
 
         result.append({
             'Emp_Id': emp.Emp_Id,
             'Emp_Name': emp.Emp_Name,
             'Designation': desig_info,
-            'Sub_Section': emp.Sub_Section,
-            'Section': emp.Section,
+            'Sub_Section': sub_sec_info,
+            'Section': sec_info,
             'Category': emp.Category,
             'Grade': grade_info,
             'Gross_Salary': gross_val,
             'Daily_Rate': daily_rate,
-            'designation_obj': emp.designation_rel # Optional: pass the whole object for advanced usage
+            'designation_obj': emp.designation_rel
         })
     return result
 
 def get_distinct_sections():
-    """Returns a list of distinct sections."""
-    results = db.session.query(distinct(Employee.Section)).filter(Employee.Section != None, Employee.Section != '').order_by(Employee.Section).all()
-    return [r[0] for r in results]
+    """Returns a list of distinct sections from the new Section table."""
+    results = Section.query.order_by(Section.name).all()
+    return [s.name for s in results]
 
 def get_distinct_sub_sections(section=None):
-    """Returns a list of distinct sub-sections, optionally filtered by section."""
-    query = db.session.query(distinct(Employee.Sub_Section)).filter(Employee.Sub_Section != None, Employee.Sub_Section != '')
+    """Returns a list of distinct sub-sections, optionally filtered by section name."""
+    query = SubSection.query
     if section:
-        query = query.filter(Employee.Section == section)
-    results = query.order_by(Employee.Sub_Section).all()
-    return [r[0] for r in results]
+        query = query.join(SubSection.section_rel).filter(Section.name == section)
+    results = query.order_by(SubSection.name).all()
+    return [s.name for s in results]
 
 def get_distinct_categories():
-    """Returns a list of distinct categories."""
+    """Returns a list of distinct categories from employee table."""
     results = db.session.query(distinct(Employee.Category)).filter(Employee.Category != None, Employee.Category != '').order_by(Employee.Category).all()
     return [r[0] for r in results]
 
@@ -78,4 +82,4 @@ def get_employee_count():
 
 def get_section_count():
     """Returns the count of distinct sub-sections."""
-    return db.session.query(distinct(Employee.Sub_Section)).filter(Employee.Sub_Section != None, Employee.Sub_Section != '').count()
+    return SubSection.query.count()

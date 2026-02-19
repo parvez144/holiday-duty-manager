@@ -322,3 +322,60 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
             serial += 1
 
     return rows
+
+def compute_security_payment(for_date: str):
+    """Compute holiday payment for security personnel (double basic for any attendance)."""
+    # 1. Fetch Employees in Security Subsection
+    employees = get_employees(sub_section='Security')
+    if not employees:
+        return []
+
+    # 2. Fetch Attendance
+    emp_ids = [str(e['Emp_Id']) for e in employees]
+    attendance_data = get_attendance_for_date(for_date, emp_ids)
+
+    rows = []
+    serial = 1
+    
+    for emp in employees:
+        emp_id = str(emp['Emp_Id'])
+        stats = attendance_data.get(emp_id)
+        
+        # Security Rule: If ANY punch exists, they get paid
+        if not stats:
+            continue
+
+        in_dt = stats.get('in_time')
+        out_dt = stats.get('out_time')
+        
+        # Display times
+        disp_in = in_dt.strftime('%H:%M') if in_dt else "Missing"
+        disp_out = out_dt.strftime('%H:%M') if out_dt else "Missing"
+
+        # Salary calculations
+        gross_salary = float(emp.get('Gross_Salary') or 0)
+        # Basic = (Gross - allowances)/1.5
+        basic_salary = (gross_salary - 2450) / 1.5
+        daily_basic = basic_salary / 30.0
+        
+        # Rule: Double Daily Basic
+        amount = daily_basic * 2.0
+
+        rows.append({
+            'sl': serial,
+            'id': emp_id,
+            'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
+            'designation': emp['Designation'].title() if emp['Designation'] else '',
+            'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
+            'section': emp['Section'].title() if emp['Section'] else '',
+            'gross': gross_salary,
+            'basic': round(basic_salary, 0),
+            'in_time': disp_in,
+            'out_time': disp_out,
+            'amount': round(amount, 0),
+            'remarks': '',
+            'signature': ''
+        })
+        serial += 1
+
+    return rows

@@ -232,22 +232,32 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
             continue
 
         out_dt = stats.get('out_time')
-        # Rule: Out-time must be at or after 10:30 PM (22:30)
-        # But calculation starts from 10:00 PM (22:00)
         if not out_dt:
             continue
             
-        # Time past 10 PM in minutes
-        # out_dt is the punch datetime
-        ref_time = out_dt.replace(hour=22, minute=0, second=0, microsecond=0)
-        if out_dt <= ref_time:
-            continue
-            
-        diff = out_dt - ref_time
+        emp_cat = (emp.get('Category') or '').strip().lower()
+        
+        # New Rule: Staff (Non-workers) must work until 11:00 PM (23:00) or later
+        # Workers follow the existing rule: At least 30 minutes past 10:00 PM (10:30 PM)
+        is_worker = 'worker' in emp_cat
+        
+        ref_time_10pm = out_dt.replace(hour=22, minute=0, second=0, microsecond=0)
+        ref_time_11pm = out_dt.replace(hour=23, minute=0, second=0, microsecond=0)
+        
+        if not is_worker:
+            # Staff Rule
+            if out_dt < ref_time_11pm:
+                continue
+        else:
+            # Worker Rule (Current 10:30 PM check)
+            if out_dt < ref_time_10pm.replace(minute=30):
+                continue
+                
+        # Total minutes past calculation base (10 PM) for payment computation
+        diff = out_dt - ref_time_10pm
         total_minutes = int(diff.total_seconds() / 60)
         
-        # Requirement: at least 30 minutes duty after 10 PM to be ELIGIBLE
-        if total_minutes < 30:
+        if total_minutes <= 0:
             continue
 
         disp_in = stats.get('in_time').strftime('%H:%M') if stats.get('in_time') else "Missing"
@@ -260,7 +270,6 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
         decimal_hours = total_minutes / 60.0
 
         # Calculation
-        emp_cat = (emp.get('Category') or '').strip().lower()
         designation = (emp.get('Designation') or '').strip().lower()
         
         gross_salary = float(emp.get('Gross_Salary') or 0)

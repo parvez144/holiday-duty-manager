@@ -215,10 +215,6 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
     emp_ids = [str(e['Emp_Id']) for e in employees]
     attendance_data = get_attendance_for_date(for_date, emp_ids)
 
-    # 3. Fetch Night Bill Rates for Staff (Designation based)
-    rates_query = Designation.query.all()
-    designation_rates = {r.designation.lower().strip(): r.night_bill for r in rates_query}
-
     rows = []
     serial = 1
     
@@ -282,8 +278,14 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
             rate_type = "OT Rate"
         else:
             # Staff: Fixed amount based on Designation (NOT proportional)
-            # Rule: If eligible (stayed past 10:30 PM), they get the full designation rate
-            amount = designation_rates.get(designation, 0)
+            # Fetch from the relationship object passed by employee_service
+            desig_obj = emp.get('designation_obj')
+            if desig_obj:
+                amount = desig_obj.night_bill
+            else:
+                # Fallback if relationship not loaded (should not happen with updated service)
+                amount = 0
+            
             hourly_rate = amount # For display in 'Rate' column
             rate_type = "Fixed Rate"
 

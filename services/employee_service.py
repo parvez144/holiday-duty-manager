@@ -12,6 +12,10 @@ def get_employees(section=None, sub_section=None, category=None):
     :return: List of employee dictionaries.
     """
     query = Employee.query
+    
+    # Use joinedload to efficiently fetch designation data
+    from sqlalchemy.orm import joinedload
+    query = query.options(joinedload(Employee.designation_rel))
 
     if section:
         query = query.filter(Employee.Section == section)
@@ -24,18 +28,29 @@ def get_employees(section=None, sub_section=None, category=None):
     
     result = []
     for emp in employees:
-        daily_rate = round(float(emp.Gross_Salary or 0) / 30, 2)
+        gross_val = float(emp.Gross_Salary or 0)
+        daily_rate = round(gross_val / 30, 2)
         
+        # Merge designation properties if available
+        # This keeps the dictionary structure consistent with what reports expect
+        desig_info = "" 
+        grade_info = emp.Grade # Keep fallback for Grade if it's still in employees table
+        
+        if emp.designation_rel:
+            desig_info = emp.designation_rel.designation
+            grade_info = emp.designation_rel.grade
+
         result.append({
             'Emp_Id': emp.Emp_Id,
             'Emp_Name': emp.Emp_Name,
-            'Designation': emp.Designation,
+            'Designation': desig_info,
             'Sub_Section': emp.Sub_Section,
             'Section': emp.Section,
             'Category': emp.Category,
-            'Grade': emp.Grade,
-            'Gross_Salary': float(emp.Gross_Salary or 0),
-            'Daily_Rate': daily_rate
+            'Grade': grade_info,
+            'Gross_Salary': gross_val,
+            'Daily_Rate': daily_rate,
+            'designation_obj': emp.designation_rel # Optional: pass the whole object for advanced usage
         })
     return result
 

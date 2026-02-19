@@ -46,7 +46,7 @@ try:
     cursor = conn.cursor()
 
     # =====================
-    # 3️⃣ Table Create (if not exists)
+    # 3️⃣ Table Create (if not exists) & Schema Update
     # =====================
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS employees (
@@ -56,24 +56,55 @@ try:
         Sub_Section VARCHAR(100),
         Section VARCHAR(100),
         Gross_Salary DECIMAL(15,2),
-        Designation VARCHAR(100),
         Category VARCHAR(50),
-        Grade VARCHAR(50)
+        Grade VARCHAR(50),
+        designation_id INT,
+        FOREIGN KEY (designation_id) REFERENCES designations(id)
     )
     """)
+    
+    # Try to add designation_id column if it doesn't exist (in case table already exists)
+    try:
+        cursor.execute("ALTER TABLE employees ADD COLUMN designation_id INT")
+        cursor.execute("ALTER TABLE employees ADD FOREIGN KEY (designation_id) REFERENCES designations(id)")
+        print("Added designation_id column to existing table.")
+    except mysql.connector.Error as err:
+        if err.errno == 1060: # Column already exists
+            pass
+        else:
+            print(f"Schema update info: {err}")
+
+    # Fetch designations for lookup
+    cursor.execute("SELECT id, designation FROM designations")
+    desig_lookup = {d[1].strip().lower(): d[0] for d in cursor.fetchall()}
+    print(f"Loaded {len(desig_lookup)} designations for mapping.")
+
     print("Table checked/created successfully")
 
     # =====================
     # 4️⃣ From CSV to Database
     # =====================
     # INSERT IGNORE used to prevent errors from duplicate Emp_Id
+    # ON DUPLICATE KEY UPDATE used to update existing records with new designation_id
     sql = """
-    INSERT IGNORE INTO employees (Emp_Id, Emp_Name, Join_Date, Sub_Section, Section, Gross_Salary, Designation, Category, Grade)
+    INSERT INTO employees (Emp_Id, Emp_Name, Join_Date, Sub_Section, Section, Gross_Salary, Category, Grade, designation_id)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE 
+        Emp_Name=VALUES(Emp_Name),
+        Join_Date=VALUES(Join_Date),
+        Sub_Section=VALUES(Sub_Section),
+        Section=VALUES(Section),
+        Gross_Salary=VALUES(Gross_Salary),
+        Category=VALUES(Category),
+        Grade=VALUES(Grade),
+        designation_id=VALUES(designation_id)
     """
     
     count = 0
     for _, row in df.iterrows():
+        desig_name = str(row['Designation']).strip().lower()
+        d_id = desig_lookup.get(desig_name)
+        
         cursor.execute(sql, (
             row['Emp_Id'],
             row['Emp_Name'],
@@ -81,9 +112,9 @@ try:
             row['Sub_Section'],
             row['Section'],
             row['Gross_Salary'],
-            row['Designation'],
             row['Category'],
-            row['Grade']
+            row['Grade'],
+            d_id
         ))
         if cursor.rowcount > 0:
             count += 1

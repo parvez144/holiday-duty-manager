@@ -7,6 +7,7 @@
     <title>Night Bill</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
 </head>
 
@@ -24,7 +25,7 @@
                 <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
                 <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
                     title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
+                    <i class="fas fa-sign-out-alt fa-lg"></i>
                 </a>
             </div>
         </header>

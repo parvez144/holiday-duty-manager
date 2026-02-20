@@ -7,123 +7,21 @@
     <title>Security Holiday Payment</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
     <style>
-        .filter-section {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .input-group label {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .input-group input {
-            padding: 0.625rem 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-            font-size: 0.875rem;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .input-group input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
-        }
-
-        .btn {
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            border: none;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-outline:hover {
-            background: var(--card-bg);
-        }
-
-        .report-table-container {
-            background: var(--card-bg);
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .report-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        .report-table th {
-            background: var(--bg);
-            padding: 1rem;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .report-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-            font-size: 0.875rem;
-        }
-
-        .report-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .report-table tr:hover td {
-            background: rgba(99, 102, 241, 0.05);
-        }
-
         .amount {
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .days-badge {
+            background: rgba(99, 102, 241, 0.1);
             color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            border: 1px solid rgba(99, 102, 241, 0.2);
         }
     </style>
 </head>
@@ -151,70 +49,69 @@
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
 
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
-            <div>
-                <h1>Security Holiday Payment Sheet</h1>
-                <p class="subtitle">
-                    {% if start_date == end_date %}
-                    For the date of {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
-                    {% else %}
-                    From {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
-                    to {{ datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %B %Y') }}
-                    {% endif %}
-                </p>
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <form method="GET" style="display: flex; gap: 1rem; align-items: flex-end;">
-                    <div class="input-group">
-                        <label for="start_date">From Date</label>
-                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}"
-                            style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-                    </div>
-                    <div class="input-group">
-                        <label for="end_date">To Date</label>
-                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}"
-                            style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="height: 38px;">
-                        <i class="fas fa-sync"></i> Update
+        <div style="margin-bottom: 2.5rem;">
+            <h1>Security Holiday Payment</h1>
+            <p class="subtitle">
+                {% if start_date == end_date %}
+                For the date of {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                {% else %}
+                From <strong>{{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}</strong>
+                to <strong>{{ datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %B %Y') }}</strong>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="controls">
+            <form method="GET" class="filters-row">
+                <div class="control-group">
+                    <label for="start_date">From Date</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="control-group">
+                    <label for="end_date">To Date</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="btn-group" style="align-items: flex-end;">
+                    <button type="submit" class="btn-primary" style="height: 46px;">
+                        <i class="fas fa-sync-alt"></i> Update Report
                     </button>
-                </form>
-                <a href="{{ url_for('security_payment.security_payment_pdf', start_date=start_date, end_date=end_date) }}"
-                    target="_blank" class="btn btn-outline" style="height: 38px; display: flex; align-items: center;">
-                    <i class="fas fa-file-pdf"></i> Export PDF
-                </a>
-            </div>
+                    <a href="{{ url_for('security_payment.security_payment_pdf', start_date=start_date, end_date=end_date) }}"
+                        target="_blank" class="btn-outline"
+                        style="text-decoration: none; height: 46px; display: flex; align-items: center; justify-content: center; padding: 0 1.5rem; border-radius: 0.75rem;">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </a>
+                </div>
+            </form>
         </div>
 
         {% if rows %}
-        <div class="report-table-container">
-            <table class="report-table">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr>
-                        <th style="width: 5%">SL</th>
-                        <th style="width: 10%">ID</th>
-                        <th style="width: 25%">Name</th>
-                        <th style="width: 15%">Designation</th>
-                        <th style="width: 10%">Gross</th>
-                        <th style="width: 10%">Basic</th>
-                        <th style="width: 5%">Days</th>
-                        <th style="width: 10%">Amount</th>
-                        <th style="width: 10%">Signature</th>
+                        <th style="width: 50px">SL</th>
+                        <th style="width: 100px">ID</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th style="width: 100px">Gross</th>
+                        <th style="width: 100px">Basic</th>
+                        <th style="text-align: center; width: 80px;">Days</th>
+                        <th style="text-align: right; width: 120px;">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in rows %}
                     <tr>
-                        <td>{{ row.sl }}</td>
-                        <td style="font-weight: 600;">{{ row.id }}</td>
-                        <td>{{ row.name }}</td>
+                        <td style="color: var(--text-muted);">{{ row.sl }}</td>
+                        <td style="font-weight: 700; color: var(--primary);">{{ row.id }}</td>
+                        <td style="font-weight: 500;">{{ row.name }}</td>
                         <td>{{ row.designation }}</td>
                         <td>{{ row.gross|round|int }}</td>
                         <td>{{ row.basic|round|int }}</td>
-                        <td style="text-align: center; font-weight: bold; color: var(--primary);">{{ row.days_worked }}
+                        <td style="text-align: center;">
+                            <span class="days-badge">{{ row.days_worked }}</span>
                         </td>
-                        <td class="amount">{{ row.amount|round|int }}</td>
-                        <td></td>
+                        <td class="amount" style="text-align: right;">{{ row.amount|round|int }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -222,11 +119,24 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="fas fa-shield-halved fa-3x"
-                style="margin-bottom: 1.5rem; color: var(--primary); opacity: 0.5;"></i>
-            <p>No security records found for this date.</p>
+            <i class="fas fa-shield-halved fa-4x" style="margin-bottom: 1.5rem; opacity: 0.2;"></i>
+            <p>No security records found for the selected period.</p>
         </div>
         {% endif %}
+
+        <footer class="app-footer no-print">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
+                    }}-{% endif %}{{ system.copyright.year }}
+                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                </div>
+                <div class="developer-info">
+                    {{ system.developer.text }}
+                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name }}</a>
+                </div>
+            </div>
+        </footer>
     </div>
 </body>
 

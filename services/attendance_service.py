@@ -55,6 +55,55 @@ def get_attendance_for_date(report_date, emp_ids=None):
     
     return final_data
 
+def get_attendance_for_range(start_date, end_date, emp_ids=None):
+    """
+    Fetches attendance records for a date range.
+    Returns: {date_str: {emp_code: {'in_time': datetime, 'out_time': datetime}}}
+    """
+    query = db.session.query(
+        IClockTransaction.emp_code,
+        IClockTransaction.punch_time
+    ).filter(func.date(IClockTransaction.punch_time) >= start_date) \
+     .filter(func.date(IClockTransaction.punch_time) <= end_date)
+
+    if emp_ids:
+        query = query.filter(IClockTransaction.emp_code.in_(emp_ids))
+    
+    results = query.all()
+
+    # Grouping by date and then by employee
+    # { '2026-02-20': { '123': {'morning': [], 'afternoon': []} } }
+    temp_data = {}
+    
+    for row in results:
+        eid = str(row.emp_code).strip()
+        punch = row.punch_time
+        d_str = punch.strftime('%Y-%m-%d')
+        
+        if d_str not in temp_data:
+            temp_data[d_str] = {}
+        
+        if eid not in temp_data[d_str]:
+            temp_data[d_str][eid] = {'morning': [], 'afternoon': []}
+        
+        if punch.hour < 13:
+            temp_data[d_str][eid]['morning'].append(punch)
+        else:
+            temp_data[d_str][eid]['afternoon'].append(punch)
+
+    final_data = {}
+    for d_str, emps in temp_data.items():
+        final_data[d_str] = {}
+        for eid, data in emps.items():
+            in_time = min(data['morning']) if data['morning'] else None
+            out_time = max(data['afternoon']) if data['afternoon'] else None
+            final_data[d_str][eid] = {
+                'in_time': in_time,
+                'out_time': out_time
+            }
+    
+    return final_data
+
 def add_manual_punch(emp_code, punch_time):
     """
     Adds or updates a manual punch record.

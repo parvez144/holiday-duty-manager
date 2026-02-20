@@ -154,22 +154,33 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
             <div>
                 <h1>Security Holiday Payment Sheet</h1>
-                <p class="subtitle">For the date of {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                <p class="subtitle">
+                    {% if start_date == end_date %}
+                    For the date of {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                    {% else %}
+                    From {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                    to {{ datetime.strptime(end_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                    {% endif %}
                 </p>
             </div>
             <div style="display: flex; gap: 1rem;">
                 <form method="GET" style="display: flex; gap: 1rem; align-items: flex-end;">
                     <div class="input-group">
-                        <label for="date">Select Date</label>
-                        <input type="date" id="date" name="date" value="{{ for_date }}"
+                        <label for="start_date">From Date</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}"
                             style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
                     </div>
-                    <button type="submit" class="btn btn-primary" style="height: 42px;">
+                    <div class="input-group">
+                        <label for="end_date">To Date</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}"
+                            style="padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 38px;">
                         <i class="fas fa-sync"></i> Update
                     </button>
                 </form>
-                <a href="{{ url_for('security_payment.security_payment_pdf', date=for_date) }}" target="_blank"
-                    class="btn btn-outline" style="height: 42px; display: flex; align-items: center;">
+                <a href="{{ url_for('security_payment.security_payment_pdf', start_date=start_date, end_date=end_date) }}"
+                    target="_blank" class="btn btn-outline" style="height: 38px; display: flex; align-items: center;">
                     <i class="fas fa-file-pdf"></i> Export PDF
                 </a>
             </div>
@@ -183,9 +194,10 @@
                         <th style="width: 5%">SL</th>
                         <th style="width: 10%">ID</th>
                         <th style="width: 25%">Name</th>
-                        <th style="width: 20%">Designation</th>
+                        <th style="width: 15%">Designation</th>
                         <th style="width: 10%">Gross</th>
                         <th style="width: 10%">Basic</th>
+                        <th style="width: 5%">Days</th>
                         <th style="width: 10%">Amount</th>
                         <th style="width: 10%">Signature</th>
                     </tr>
@@ -199,6 +211,8 @@
                         <td>{{ row.designation }}</td>
                         <td>{{ row.gross|round|int }}</td>
                         <td>{{ row.basic|round|int }}</td>
+                        <td style="text-align: center; font-weight: bold; color: var(--primary);">{{ row.days_worked }}
+                        </td>
                         <td class="amount">{{ row.amount|round|int }}</td>
                         <td></td>
                     </tr>

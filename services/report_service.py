@@ -1,7 +1,7 @@
 from datetime import datetime
 from collections import defaultdict
 from services.employee_service import get_employees
-from services.attendance_service import get_attendance_for_date
+from services.attendance_service import get_attendance_for_date, get_attendance_for_range
 from models.designation import Designation
 
 def compute_payment_sheet(for_date: str, section: str | None, sub_section: str | None, category: str | None):
@@ -323,43 +323,65 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
 
     return rows
 
-def compute_security_payment(for_date: str):
-    """Compute holiday payment for security personnel (double basic for any attendance)."""
+def compute_security_payment(start_date: str, end_date: str = None):
+    """Compute holiday payment for security personnel (double basic for each day they worked in the range)."""
+    if not end_date:
+        end_date = start_date
+
     # 1. Fetch Employees in Security Subsection
     employees = get_employees(sub_section='Security')
     if not employees:
         return []
 
-    # 2. Fetch Attendance
+    # 2. Fetch Attendance for the range
     emp_ids = [str(e['Emp_Id']) for e in employees]
-    attendance_data = get_attendance_for_date(for_date, emp_ids)
+    attendance_range_data = get_attendance_for_range(start_date, end_date, emp_ids)
+
+    # 3. Aggregate results per employee
+    # { emp_id: { 'days_worked': N, 'total_amount': X, 'last_seen_in': '', 'last_seen_out': '' } }
+    aggregated = {}
+    
+    for date_str, daily_data in attendance_range_data.items():
+        for emp_id, stats in daily_data.items():
+            if emp_id not in aggregated:
+                aggregated[emp_id] = {
+                    'days_worked': 0,
+                    'last_seen_in': 'Missing',
+                    'last_seen_out': 'Missing'
+                }
+            
+            aggregated[emp_id]['days_worked'] += 1
+            
+            # For multi-date, "in_time" and "out_time" columns in the sheet might be 
+            # confusing. Let's show the most recent one or just a count.
+            # But the user might want to see the specific dates. 
+            # However, the sheet is grouped by employee.
+            # I will show the 'days_worked' and total amount.
+            
+            in_dt = stats.get('in_time')
+            out_dt = stats.get('out_time')
+            if in_dt:
+                aggregated[emp_id]['last_seen_in'] = in_dt.strftime('%H:%M')
+            if out_dt:
+                aggregated[emp_id]['last_seen_out'] = out_dt.strftime('%H:%M')
 
     rows = []
     serial = 1
     
     for emp in employees:
         emp_id = str(emp['Emp_Id'])
-        stats = attendance_data.get(emp_id)
+        agg_stats = aggregated.get(emp_id)
         
-        # Security Rule: If ANY punch exists, they get paid
-        if not stats:
+        if not agg_stats:
             continue
-
-        in_dt = stats.get('in_time')
-        out_dt = stats.get('out_time')
-        
-        # Display times
-        disp_in = in_dt.strftime('%H:%M') if in_dt else "Missing"
-        disp_out = out_dt.strftime('%H:%M') if out_dt else "Missing"
 
         # Salary calculations
         gross_salary = float(emp.get('Gross_Salary') or 0)
-        # Basic = (Gross - allowances)/1.5
         basic_salary = (gross_salary - 2450) / 1.5
         daily_basic = basic_salary / 30.0
         
-        # Rule: Double Daily Basic
-        amount = daily_basic * 2.0
+        # Rule: Double Daily Basic * Number of days worked
+        amount = daily_basic * 2.0 * agg_stats['days_worked']
 
         rows.append({
             'sl': serial,
@@ -370,10 +392,11 @@ def compute_security_payment(for_date: str):
             'section': emp['Section'].title() if emp['Section'] else '',
             'gross': gross_salary,
             'basic': round(basic_salary, 0),
-            'in_time': disp_in,
-            'out_time': disp_out,
+            'in_time': agg_stats['last_seen_in'],
+            'out_time': agg_stats['last_seen_out'],
+            'days_worked': agg_stats['days_worked'],
             'amount': round(amount, 0),
-            'remarks': '',
+            'remarks': f"Worked {agg_stats['days_worked']} days",
             'signature': ''
         })
         serial += 1

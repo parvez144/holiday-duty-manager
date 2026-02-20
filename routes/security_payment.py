@@ -10,19 +10,32 @@ security_payment_bp = Blueprint('security_payment', __name__)
 @security_payment_bp.route('/security_payment')
 @login_required
 def security_payment_page():
-    for_date = request.args.get('date', datetime.today().strftime('%Y-%m-%d'))
-    rows = compute_security_payment(for_date)
-    return render_template('security_payment.html', rows=rows, for_date=for_date, datetime=datetime)
+    today = datetime.today().strftime('%Y-%m-%d')
+    start_date = request.args.get('start_date', today)
+    end_date = request.args.get('end_date', today)
+    
+    rows = compute_security_payment(start_date, end_date)
+    return render_template(
+        'security_payment.html', 
+        rows=rows, 
+        start_date=start_date, 
+        end_date=end_date, 
+        datetime=datetime
+    )
 
 @security_payment_bp.route('/security_payment/pdf')
 @login_required
 def security_payment_pdf():
-    for_date = request.args.get('date', datetime.today().strftime('%Y-%m-%d'))
-    rows = compute_security_payment(for_date)
+    today = datetime.today().strftime('%Y-%m-%d')
+    start_date = request.args.get('start_date', today)
+    end_date = request.args.get('end_date', today)
+    
+    rows = compute_security_payment(start_date, end_date)
     
     html_content = render_template(
         'security_payment_pdf.html',
-        for_date=for_date,
+        start_date=start_date,
+        end_date=end_date,
         rows=rows,
         datetime=datetime
     )

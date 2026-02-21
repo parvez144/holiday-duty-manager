@@ -74,13 +74,21 @@
                             <option value="">All Categories</option>
                         </select>
                     </div>
+                    <div class="control-group">
+                        <label>Select Holiday Record</label>
+                        <div class="custom-select-wrapper" id="holiday-selector-wrapper">
+                            <div class="select-box">
+                                <input type="text" id="holiday-record-input" placeholder="Search and select holiday..."
+                                    autocomplete="off">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="select-options" id="holiday-options-list">
+                                <!-- Options populated by JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="btn-group">
-                    <button id="btn-fetch" class="btn-primary">
-                        <div class="spinner" id="fetch-spinner"></div>
-                        <i class="fas fa-chart-bar"></i>
-                        Generate Report
-                    </button>
                     <button id="btn-pdf" class="btn-outline">
                         <i class="fas fa-print"></i>
                         Print
@@ -90,6 +98,11 @@
                         Excel
                     </button>
                 </div>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="report-search" class="search-input" placeholder="Quick search by ID or Name...">
             </div>
 
             <div class="table-container">
@@ -124,8 +137,8 @@
                         <input type="date" id="new-h-date" value="{{ today }}">
                     </div>
                     <div class="control-group" style="grid-column: span 2;">
-                        <label for="new-h-name">Description (e.g. Martyr's Day)</label>
-                        <input type="text" id="new-h-name" placeholder="Martyr's Day">
+                        <label for="new-h-name">Holiday Description</label>
+                        <input type="text" id="new-h-name" placeholder="Please enter holiday description">
                     </div>
                     <div class="control-group" style="justify-content: flex-end;">
                         <button id="btn-add-holiday" class="btn-primary" style="height: 44px; margin-top: auto;">
@@ -133,6 +146,12 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="holiday-search" class="search-input"
+                    placeholder="Search holidays by date or description...">
             </div>
 
             <div class="table-container">

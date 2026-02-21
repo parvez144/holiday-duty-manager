@@ -11,6 +11,10 @@ const holidayListBody = document.getElementById('holiday-list-body');
 const newHDate = document.getElementById('new-h-date');
 const newHName = document.getElementById('new-h-name');
 const addHolidayBtn = document.getElementById('btn-add-holiday');
+const holidayRecordInput = document.getElementById('holiday-record-input');
+const holidayOptionsList = document.getElementById('holiday-options-list');
+const reportSearchInput = document.getElementById('report-search');
+const holidaySearchInput = document.getElementById('holiday-search');
 
 // Tab logic
 const tabBtns = document.querySelectorAll('.tab-btn');
@@ -58,6 +62,8 @@ async function loadFilters() {
 
         // Initialize sub-sections
         updateSubSections();
+        // Load holiday records for dropdown
+        updateHolidayRecords();
     } catch (err) {
         console.error("Failed to load filters", err);
     }
@@ -87,8 +93,6 @@ async function generateReport() {
     const date = dateEl.value;
     if (!date) return alert("Please select a date");
 
-    searchBtn.disabled = true;
-    fetchSpinner.style.display = 'block';
     tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading data...</td></tr>';
 
     try {
@@ -124,9 +128,6 @@ async function generateReport() {
     } catch (err) {
         alert("Error fetching report data");
         tableBody.innerHTML = '<tr><td colspan="8" class="empty-state" style="color:#ef4444">Failed to load data.</td></tr>';
-    } finally {
-        searchBtn.disabled = false;
-        fetchSpinner.style.display = 'none';
     }
 }
 
@@ -217,6 +218,9 @@ async function loadHolidays() {
                 </td>
             </tr>
         `).join('');
+
+        // Keep the reports dropdown in sync
+        updateHolidayRecords();
     } catch (err) {
         console.error("Failed to load holidays", err);
     }
@@ -278,11 +282,117 @@ async function deleteHoliday(id) {
     }
 }
 
+async function updateHolidayRecords() {
+    try {
+        const res = await fetch('/api/holidays');
+        const holidays = await res.json();
+        
+        // Filter processed only
+        const processed = holidays.filter(h => h.processed_at);
+        
+        // Store globally to use for filtering without re-fetching
+        window.allProcessedHolidays = processed;
+        
+        renderHolidayOptions(processed);
+    } catch (err) {
+        console.error("Failed to load holiday records", err);
+    }
+}
+
+function renderHolidayOptions(items) {
+    if (items.length === 0) {
+        holidayOptionsList.innerHTML = '<div class="option-item no-results">No processed records found</div>';
+        return;
+    }
+
+    holidayOptionsList.innerHTML = items.map(h => `
+        <div class="option-item" data-date="${h.date}" data-name="${h.name}">
+            <strong>${h.date}</strong> - ${h.name}
+        </div>
+    `).join('');
+
+    // Attach click listeners to new options
+    holidayOptionsList.querySelectorAll('.option-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const date = item.dataset.date;
+            const name = item.dataset.name;
+            holidayRecordInput.value = `${date} - ${name}`;
+            dateEl.value = date;
+            holidayOptionsList.classList.remove('active');
+            generateReport();
+        });
+    });
+}
+
+// Custom Dropdown Logic
+holidayRecordInput.addEventListener('focus', () => {
+    holidayOptionsList.classList.add('active');
+});
+
+// Close when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#holiday-selector-wrapper')) {
+        holidayOptionsList.classList.remove('active');
+    }
+});
+
+holidayRecordInput.addEventListener('input', () => {
+    const term = holidayRecordInput.value.toLowerCase();
+    const filtered = (window.allProcessedHolidays || []).filter(h => 
+        h.date.toLowerCase().includes(term) || h.name.toLowerCase().includes(term)
+    );
+    renderHolidayOptions(filtered);
+    holidayOptionsList.classList.add('active');
+});
+
 // Event Listeners
-sectionEl.addEventListener('change', updateSubSections);
-searchBtn.addEventListener('click', generateReport);
+sectionEl.addEventListener('change', () => {
+    updateSubSections();
+    generateReport();
+});
+subSectionEl.addEventListener('change', generateReport);
+catEl.addEventListener('change', generateReport);
+dateEl.addEventListener('change', generateReport);
+
 document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
 document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));
 addHolidayBtn.addEventListener('click', addHoliday);
+
+reportSearchInput.addEventListener('input', () => {
+    const term = reportSearchInput.value.toLowerCase();
+    const rows = tableBody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        // Skip empty state row
+        if (row.querySelector('.empty-state')) return;
+        
+        const id = row.cells[1]?.textContent.toLowerCase() || '';
+        const name = row.cells[2]?.textContent.toLowerCase() || '';
+        
+        if (id.includes(term) || name.includes(term)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+holidaySearchInput.addEventListener('input', () => {
+    const term = holidaySearchInput.value.toLowerCase();
+    const rows = holidayListBody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        if (row.querySelector('.empty-state')) return;
+        
+        const date = row.cells[0]?.textContent.toLowerCase() || '';
+        const name = row.cells[1]?.textContent.toLowerCase() || '';
+        
+        if (date.includes(term) || name.includes(term)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
 
 window.addEventListener('load', loadFilters);

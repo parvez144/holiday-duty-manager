@@ -6,6 +6,35 @@ const searchBtn = document.getElementById('btn-fetch');
 const tableBody = document.getElementById('report-body');
 const fetchSpinner = document.getElementById('fetch-spinner');
 
+// Holiday Management Selectors
+const holidayListBody = document.getElementById('holiday-list-body');
+const newHDate = document.getElementById('new-h-date');
+const newHName = document.getElementById('new-h-name');
+const addHolidayBtn = document.getElementById('btn-add-holiday');
+
+// Tab logic
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+        
+        // Update buttons
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update content
+        tabContents.forEach(content => {
+            content.style.display = content.id === tabId ? 'block' : 'none';
+        });
+
+        if (tabId === 'holiday-tab') {
+            loadHolidays();
+        }
+    });
+});
+
 async function loadFilters() {
     try {
         const [sections, categories] = await Promise.all([
@@ -90,7 +119,7 @@ async function generateReport() {
                 </tr>
             `).join('');
         } else {
-            tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No attendance found for this day.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No processed holiday data found for this day. Make sure you have added the holiday and clicked "Process" in the Holiday Management tab.</td></tr>';
         }
     } catch (err) {
         alert("Error fetching report data");
@@ -113,7 +142,6 @@ function downloadReport(type) {
     };
 
     if (type === 'pdf') {
-        // Open PDF in a new tab
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/reports/payment_sheet/${type}`;
@@ -129,7 +157,6 @@ function downloadReport(type) {
         form.submit();
         document.body.removeChild(form);
     } else {
-        // Download Excel file
         fetch(`/reports/payment_sheet/${type}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -149,9 +176,108 @@ function downloadReport(type) {
     }
 }
 
+// Holiday Management Functions
+async function loadHolidays() {
+    try {
+        const res = await fetch('/api/holidays');
+        const holidays = await res.json();
+        
+        if (holidays.length === 0) {
+            holidayListBody.innerHTML = '<tr><td colspan="5" class="empty-state">No holidays defined yet.</td></tr>';
+            return;
+        }
+
+        holidayListBody.innerHTML = holidays.map(h => `
+            <tr>
+                <td>${h.date}</td>
+                <td>${h.name}</td>
+                <td><span class="badge badge-${h.status}">${h.status}</span></td>
+                <td>${h.processed_at || 'Never'}</td>
+                <td>
+                    <div class="action-btns">
+                        ${h.status === 'draft' ? `
+                            <button onclick="processHoliday(${h.id})" class="btn-sm btn-process" title="Import data from iClock">
+                                <i class="fas fa-sync"></i> Process
+                            </button>
+                            <button onclick="finalizeHoliday(${h.id})" class="btn-sm btn-finalize" title="Lock data for payment">
+                                <i class="fas fa-lock"></i> Finalize
+                            </button>
+                            <button onclick="deleteHoliday(${h.id})" class="btn-sm btn-delete-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : `
+                            <span style="color: var(--accent); font-size: 0.8rem;"><i class="fas fa-check-circle"></i> Locked</span>
+                        `}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Failed to load holidays", err);
+    }
+}
+
+async function addHoliday() {
+    const date = newHDate.value;
+    const name = newHName.value;
+    if (!date || !name) return alert("Please provide both date and description");
+
+    try {
+        const res = await fetch('/api/holidays', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, name })
+        });
+        const data = await res.json();
+        if (data.error) return alert(data.error);
+        
+        newHName.value = '';
+        loadHolidays();
+    } catch (err) {
+        alert("Failed to add holiday");
+    }
+}
+
+async function processHoliday(id) {
+    if (!confirm("This will fetch attendance data from iClock and replace any existing snapshot for this day. Proceed?")) return;
+    
+    try {
+        const res = await fetch(`/api/holidays/${id}/process`, { method: 'POST' });
+        const data = await res.json();
+        alert(data.message || data.error);
+        loadHolidays();
+    } catch (err) {
+        alert("Processing failed");
+    }
+}
+
+async function finalizeHoliday(id) {
+    if (!confirm("Are you sure? Finalizing will lock the data and prevent any further changes or re-processing.")) return;
+    
+    try {
+        const res = await fetch(`/api/holidays/${id}/finalize`, { method: 'POST' });
+        loadHolidays();
+    } catch (err) {
+        alert("Finalization failed");
+    }
+}
+
+async function deleteHoliday(id) {
+    if (!confirm("Delete this holiday and all its snapshot data?")) return;
+    
+    try {
+        await fetch(`/api/holidays/${id}`, { method: 'DELETE' });
+        loadHolidays();
+    } catch (err) {
+        alert("Deletion failed");
+    }
+}
+
+// Event Listeners
 sectionEl.addEventListener('change', updateSubSections);
 searchBtn.addEventListener('click', generateReport);
 document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
 document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));
+addHolidayBtn.addEventListener('click', addHoliday);
 
 window.addEventListener('load', loadFilters);

@@ -10,6 +10,7 @@ from routes.security_payment import security_payment_bp
 from routes.attendance_mgmt import attendance_mgmt_bp
 from extensions import db, login_manager
 from models.user import User
+from models.holiday import Holiday, HolidayDutyRecord
 from system_config import system_info, user
 
 app = Flask(__name__)

@@ -300,3 +300,83 @@ tr:hover td {
     padding: 0 2rem;
   }
 }
+
+/* Tabs */
+.tab-btn {
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent !important;
+}
+
+.tab-btn.active {
+  color: var(--primary) !important;
+  border-bottom: 2px solid var(--primary) !important;
+}
+
+.tab-btn:hover {
+  color: var(--text) !important;
+}
+
+/* Holiday Table Actions */
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-draft {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-finalized {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.action-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border-radius: 0.5rem;
+}
+
+.btn-process {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-process:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-finalize {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid #10b981;
+}
+
+.btn-finalize:hover {
+  background: #10b981;
+  color: white;
+}
+
+.btn-delete-sm {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.btn-delete-sm:hover {
+  background: #ef4444;
+  color: white;
+}

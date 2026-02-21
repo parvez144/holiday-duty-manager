@@ -79,9 +79,15 @@ def api_holidays():
 @holiday_reports_bp.route('/api/holidays/<int:h_id>', methods=['DELETE'])
 @login_required
 def api_delete_holiday(h_id):
+    from flask_login import current_user
     holiday = Holiday.query.get_or_404(h_id)
-    if holiday.status == 'finalized':
-        return jsonify({'error': 'Cannot delete a finalized holiday'}), 400
+    
+    # Allow deletion if it's draft OR if the user is an Admin
+    is_admin = getattr(current_user, 'role', 'User') == 'Admin'
+    
+    if holiday.status == 'finalized' and not is_admin:
+        return jsonify({'error': 'Only Admins can delete a finalized holiday'}), 400
+        
     db.session.delete(holiday)
     db.session.commit()
     return jsonify({'message': 'deleted'})

@@ -206,7 +206,12 @@ async function loadHolidays() {
                                 <i class="fas fa-trash"></i>
                             </button>
                         ` : `
-                            <span style="color: var(--accent); font-size: 0.8rem;"><i class="fas fa-check-circle"></i> Locked</span>
+                            <span style="color: var(--accent); font-size: 0.8rem; margin-right: 0.5rem;"><i class="fas fa-check-circle"></i> Locked</span>
+                            ${currentUserRole === 'Admin' ? `
+                                <button onclick="deleteHoliday(${h.id})" class="btn-sm btn-delete-sm" title="Admin Force Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
                         `}
                     </div>
                 </td>

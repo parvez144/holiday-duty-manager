@@ -257,7 +257,10 @@
             Security Holiday Payment Sheet
             <br>
             <p style="font-size: 10pt;">
-                {% if start_date == end_date %}
+                {% if is_holiday_mode %}
+                <strong>{{ holiday_name }}</strong> &mdash; {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B
+                %Y') }}
+                {% elif start_date == end_date %}
                 For the date of {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
                 {% else %}
                 From {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}

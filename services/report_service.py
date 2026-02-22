@@ -320,8 +320,8 @@ def compute_night_bill(for_date: str, section: str | None, sub_section: str | No
                 'amount': round(amount, 0),
                 'remarks': '',
                 'signature': ''
-            })
-            serial += 1
+        })
+        serial += 1
 
     return rows
 
@@ -405,6 +405,64 @@ def compute_security_payment(start_date: str, end_date: str = None):
 
     return rows
 
+def compute_security_payment_for_holiday(for_date: str):
+    """Compute holiday payment for security personnel for a single date (snapshot style)."""
+    # 1. Fetch Employees in Security Subsection
+    employees = get_employees(sub_section='Security')
+    if not employees:
+        return []
+
+    # 2. Fetch Attendance for the single date
+    emp_ids = [str(e['Emp_Id']) for e in employees]
+    attendance_data = get_attendance_for_date(for_date, emp_ids)
+
+    rows = []
+    serial = 1
+    
+    for emp in employees:
+        emp_id = str(emp['Emp_Id'])
+        stats = attendance_data.get(emp_id)
+        
+        if not stats:
+            continue
+
+        # Salary calculations
+        gross_salary = float(emp.get('Gross_Salary') or 0)
+        basic_salary = (gross_salary - 2450) / 1.5
+        daily_basic = basic_salary / 30.0
+        
+        # Rule: Double Daily Basic for the work day
+        amount = daily_basic * 2.0
+
+        in_dt = stats.get('in_time')
+        out_dt = stats.get('out_time')
+        disp_in = in_dt.strftime('%H:%M') if in_dt else "Missing"
+        disp_out = out_dt.strftime('%H:%M') if out_dt else "Missing"
+
+        rows.append({
+            'sl': serial,
+            'id': emp_id,
+            'name': emp['Emp_Name'].title() if emp['Emp_Name'] else '',
+            'designation': emp['Designation'].title() if emp['Designation'] else '',
+            'sub_section': emp['Sub_Section'].title() if emp['Sub_Section'] else '',
+            'section': emp['Section'].title() if emp['Section'] else '',
+            'category': emp.get('Category', ''),
+            'gross': gross_salary,
+            'basic': round(basic_salary, 0),
+            'in_time': disp_in,
+            'out_time': disp_out,
+            'hour': 0, # Not strictly needed for security fixed payout
+            'ot': 0,
+            'ot_rate': 0,
+            'days_worked': 1,
+            'amount': round(amount, 0),
+            'remarks': 'Holiday Duty (Security)',
+            'signature': ''
+        })
+        serial += 1
+
+    return rows
+
 def process_holiday_duty(holiday_id: int):
     """Fetch attendance from iClock and save to HolidayDutyRecord snapshot."""
     holiday = Holiday.query.get(holiday_id)
@@ -414,16 +472,22 @@ def process_holiday_duty(holiday_id: int):
     if holiday.status == 'finalized':
         raise ValueError("Cannot re-process a finalized holiday")
 
-    # 1. Compute results using existing logic
+    # 1. Compute results using existing logic (Regular Employees)
     # compute_payment_sheet expects a string date YYYY-MM-DD
     date_str = holiday.holiday_date.strftime('%Y-%m-%d')
     results = compute_payment_sheet(date_str, section=None, sub_section=None, category=None)
 
-    # 2. Clear existing records for this holiday (if any)
+    # 2. Compute Security Personnel results
+    security_results = compute_security_payment_for_holiday(date_str)
+    
+    # 3. Combine both for storage
+    all_results = results + security_results
+
+    # 4. Clear existing records for this holiday (if any)
     HolidayDutyRecord.query.filter_by(holiday_id=holiday.id).delete()
 
-    # 3. Create new records from results
-    for r in results:
+    # 5. Create new records from combined results
+    for r in all_results:
         record = HolidayDutyRecord(
             holiday_id=holiday.id,
             emp_id=r['id'],
@@ -436,19 +500,20 @@ def process_holiday_duty(holiday_id: int):
             basic_salary=r['basic'],
             in_time=r['in_time'],
             out_time=r['out_time'],
-            work_hours=r['hour'],
-            ot_hours=r['ot'],
-            ot_rate=r['ot_rate'],
+            work_hours=r.get('hour', 0),
+            ot_hours=r.get('ot', 0),
+            ot_rate=r.get('ot_rate', 0),
             amount=r['amount'],
+            remarks=r.get('remarks', ''),
             is_manual=False
         )
         db.session.add(record)
 
     holiday.processed_at = datetime.now()
     db.session.commit()
-    return len(results)
+    return len(all_results)
 
-def get_holiday_records(holiday_id: int, section=None, sub_section=None, category=None):
+def get_holiday_records(holiday_id: int, section=None, sub_section=None, category=None, include_security=False):
     """Fetch processed holiday records from snapshot table."""
     query = HolidayDutyRecord.query.filter_by(holiday_id=holiday_id)
     
@@ -458,6 +523,13 @@ def get_holiday_records(holiday_id: int, section=None, sub_section=None, categor
         query = query.filter(HolidayDutyRecord.sub_section == sub_section)
     if category:
         query = query.filter(HolidayDutyRecord.category == category)
+        
+    if not include_security:
+        # Exclude security personnel from regular reports
+        query = query.filter(
+            db.not_(HolidayDutyRecord.section.ilike('security')),
+            db.not_(HolidayDutyRecord.sub_section.ilike('security'))
+        )
         
     records = query.order_by(HolidayDutyRecord.emp_id).all()
     

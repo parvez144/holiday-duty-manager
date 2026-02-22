@@ -52,7 +52,10 @@
         <div style="margin-bottom: 2.5rem;">
             <h1>Security Holiday Payment</h1>
             <p class="subtitle">
-                {% if start_date == end_date %}
+                {% if is_holiday_mode %}
+                <strong>{{ holiday_name }}</strong> &mdash; {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B
+                %Y') }}
+                {% elif start_date == end_date %}
                 For the date of {{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}
                 {% else %}
                 From <strong>{{ datetime.strptime(start_date, '%Y-%m-%d').strftime('%d %B %Y') }}</strong>

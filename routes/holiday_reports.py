@@ -158,6 +158,7 @@ def payment_sheet_pdf():
         'payment_sheet_pdf.html',
         for_date=for_date,
         grouped_rows=grouped_rows,
+        holiday=holiday,
         datetime=datetime
     )
 

@@ -260,8 +260,12 @@
         <div class="header-title">
             Holiday Duty Payment Sheet
             <br>
-            <p style="font-size: 10pt;">For the date of {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%d %B %Y')
-                }}
+            <p style="font-size: 10pt;">
+                {% if holiday %}
+                {{ holiday.holiday_name }} &mdash; {{ holiday.holiday_date.strftime('%d %B %Y') }}
+                {% else %}
+                {{ datetime.strptime(for_date, '%Y-%m-%d').strftime('%d %B %Y') }}
+                {% endif %}
             </p>
         </div>
     </div>

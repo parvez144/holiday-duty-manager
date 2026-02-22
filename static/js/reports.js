@@ -2,9 +2,7 @@ const dateEl = document.getElementById('date-select');
 const sectionEl = document.getElementById('section-select');
 const subSectionEl = document.getElementById('sub-section-select');
 const catEl = document.getElementById('category-select');
-const searchBtn = document.getElementById('btn-fetch');
 const tableBody = document.getElementById('report-body');
-const fetchSpinner = document.getElementById('fetch-spinner');
 
 // Holiday Management Selectors
 const holidayListBody = document.getElementById('holiday-list-body');
@@ -13,7 +11,6 @@ const newHName = document.getElementById('new-h-name');
 const addHolidayBtn = document.getElementById('btn-add-holiday');
 const holidayRecordInput = document.getElementById('holiday-record-input');
 const holidayOptionsList = document.getElementById('holiday-options-list');
-const reportSearchInput = document.getElementById('report-search');
 const holidaySearchInput = document.getElementById('holiday-search');
 
 // Tab logic
@@ -23,11 +20,11 @@ const tabContents = document.querySelectorAll('.tab-content');
 tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const tabId = btn.getAttribute('data-tab');
-        
+
         // Update buttons
         tabBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
+
         // Update content
         tabContents.forEach(content => {
             content.style.display = content.id === tabId ? 'block' : 'none';
@@ -42,23 +39,27 @@ tabBtns.forEach(btn => {
 async function loadFilters() {
     try {
         const [sections, categories] = await Promise.all([
-            fetch('/api/reports/sections').then(r => r.json()),
-            fetch('/api/reports/categories').then(r => r.json())
+            fetch('/api/reports/sections').then(r => r.ok ? r.json() : []).catch(() => []),
+            fetch('/api/reports/categories').then(r => r.ok ? r.json() : []).catch(() => [])
         ]);
 
-        sections.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s;
-            opt.textContent = s;
-            sectionEl.appendChild(opt);
-        });
+        if (sectionEl) {
+            sections.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                sectionEl.appendChild(opt);
+            });
+        }
 
-        categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            catEl.appendChild(opt);
-        });
+        if (catEl) {
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                catEl.appendChild(opt);
+            });
+        }
 
         // Initialize sub-sections
         updateSubSections();
@@ -90,7 +91,7 @@ async function updateSubSections() {
 }
 
 async function generateReport() {
-    const date = dateEl.value;
+    const date = dateEl ? dateEl.value : null;
     if (!date) return alert("Please select a date");
 
     tableBody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading data...</td></tr>';
@@ -101,9 +102,9 @@ async function generateReport() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 date: date,
-                section: sectionEl.value,
-                sub_section: subSectionEl.value,
-                category: catEl.value
+                section: sectionEl ? sectionEl.value : '',
+                sub_section: subSectionEl ? subSectionEl.value : '',
+                category: catEl ? catEl.value : ''
             })
         });
 
@@ -128,6 +129,8 @@ async function generateReport() {
     } catch (err) {
         alert("Error fetching report data");
         tableBody.innerHTML = '<tr><td colspan="8" class="empty-state" style="color:#ef4444">Failed to load data.</td></tr>';
+    } finally {
+        // Spinner logic removed
     }
 }
 
@@ -182,7 +185,7 @@ async function loadHolidays() {
     try {
         const res = await fetch('/api/holidays');
         const holidays = await res.json();
-        
+
         if (holidays.length === 0) {
             holidayListBody.innerHTML = '<tr><td colspan="5" class="empty-state">No holidays defined yet.</td></tr>';
             return;
@@ -239,7 +242,7 @@ async function addHoliday() {
         });
         const data = await res.json();
         if (data.error) return alert(data.error);
-        
+
         newHName.value = '';
         loadHolidays();
     } catch (err) {
@@ -249,7 +252,7 @@ async function addHoliday() {
 
 async function processHoliday(id) {
     if (!confirm("This will fetch attendance data from iClock and replace any existing snapshot for this day. Proceed?")) return;
-    
+
     try {
         const res = await fetch(`/api/holidays/${id}/process`, { method: 'POST' });
         const data = await res.json();
@@ -262,7 +265,7 @@ async function processHoliday(id) {
 
 async function finalizeHoliday(id) {
     if (!confirm("Are you sure? Finalizing will lock the data and prevent any further changes or re-processing.")) return;
-    
+
     try {
         const res = await fetch(`/api/holidays/${id}/finalize`, { method: 'POST' });
         loadHolidays();
@@ -273,7 +276,7 @@ async function finalizeHoliday(id) {
 
 async function deleteHoliday(id) {
     if (!confirm("Delete this holiday and all its snapshot data?")) return;
-    
+
     try {
         await fetch(`/api/holidays/${id}`, { method: 'DELETE' });
         loadHolidays();
@@ -286,13 +289,13 @@ async function updateHolidayRecords() {
     try {
         const res = await fetch('/api/holidays');
         const holidays = await res.json();
-        
+
         // Filter processed only
         const processed = holidays.filter(h => h.processed_at);
-        
+
         // Store globally to use for filtering without re-fetching
         window.allProcessedHolidays = processed;
-        
+
         renderHolidayOptions(processed);
     } catch (err) {
         console.error("Failed to load holiday records", err);
@@ -324,10 +327,22 @@ function renderHolidayOptions(items) {
     });
 }
 
-// Custom Dropdown Logic
 holidayRecordInput.addEventListener('focus', () => {
     holidayOptionsList.classList.add('active');
 });
+
+const holidaySelectBox = document.getElementById('holiday-select-box');
+if (holidaySelectBox) {
+    holidaySelectBox.addEventListener('click', (e) => {
+        // Toggle if not focusing input (to avoid double toggle)
+        if (e.target !== holidayRecordInput) {
+            holidayOptionsList.classList.toggle('active');
+            if (holidayOptionsList.classList.contains('active')) {
+                holidayRecordInput.focus();
+            }
+        }
+    });
+}
 
 // Close when clicking outside
 document.addEventListener('click', (e) => {
@@ -338,7 +353,7 @@ document.addEventListener('click', (e) => {
 
 holidayRecordInput.addEventListener('input', () => {
     const term = holidayRecordInput.value.toLowerCase();
-    const filtered = (window.allProcessedHolidays || []).filter(h => 
+    const filtered = (window.allProcessedHolidays || []).filter(h =>
         h.date.toLowerCase().includes(term) || h.name.toLowerCase().includes(term)
     );
     renderHolidayOptions(filtered);
@@ -346,53 +361,43 @@ holidayRecordInput.addEventListener('input', () => {
 });
 
 // Event Listeners
-sectionEl.addEventListener('change', () => {
-    updateSubSections();
-    generateReport();
-});
-subSectionEl.addEventListener('change', generateReport);
-catEl.addEventListener('change', generateReport);
-dateEl.addEventListener('change', generateReport);
-
-document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
-document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));
-addHolidayBtn.addEventListener('click', addHoliday);
-
-reportSearchInput.addEventListener('input', () => {
-    const term = reportSearchInput.value.toLowerCase();
-    const rows = tableBody.querySelectorAll('tr');
-    
-    rows.forEach(row => {
-        // Skip empty state row
-        if (row.querySelector('.empty-state')) return;
-        
-        const id = row.cells[1]?.textContent.toLowerCase() || '';
-        const name = row.cells[2]?.textContent.toLowerCase() || '';
-        
-        if (id.includes(term) || name.includes(term)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+if (sectionEl) {
+    sectionEl.addEventListener('change', () => {
+        updateSubSections();
+        generateReport();
     });
-});
+}
+if (subSectionEl) subSectionEl.addEventListener('change', generateReport);
+if (catEl) catEl.addEventListener('change', generateReport);
+if (dateEl) dateEl.addEventListener('change', generateReport);
 
-holidaySearchInput.addEventListener('input', () => {
-    const term = holidaySearchInput.value.toLowerCase();
-    const rows = holidayListBody.querySelectorAll('tr');
-    
-    rows.forEach(row => {
-        if (row.querySelector('.empty-state')) return;
-        
-        const date = row.cells[0]?.textContent.toLowerCase() || '';
-        const name = row.cells[1]?.textContent.toLowerCase() || '';
-        
-        if (date.includes(term) || name.includes(term)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+if (document.getElementById('btn-pdf')) {
+    document.getElementById('btn-pdf').addEventListener('click', () => downloadReport('pdf'));
+}
+if (document.getElementById('btn-excel')) {
+    document.getElementById('btn-excel').addEventListener('click', () => downloadReport('excel'));
+}
+if (addHolidayBtn) addHolidayBtn.addEventListener('click', addHoliday);
+
+
+if (holidaySearchInput) {
+    holidaySearchInput.addEventListener('input', () => {
+        const term = holidaySearchInput.value.toLowerCase();
+        const rows = holidayListBody.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+
+            const date = row.cells[0]?.textContent.toLowerCase() || '';
+            const name = row.cells[1]?.textContent.toLowerCase() || '';
+
+            if (date.includes(term) || name.includes(term)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     });
-});
+}
 
 window.addEventListener('load', loadFilters);

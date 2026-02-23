@@ -106,9 +106,14 @@ def compute_payment_sheet(for_date: str, section: str | None, sub_section: str |
                 ot_hours = 0
                 work_hours = 0
 
-        # Special override for Loader sub-section
+        # Special overrides for Specific Sub-Sections or Designations
+        designation_lower = (emp.get('Designation') or '').strip().lower()
         if sub_sec == 'loader':
             amount = 500
+            ot_hours = 0
+            ot_rate = 0
+        elif designation_lower in ['checker', 'peon', 'canteen boy']:
+            amount = 350
             ot_hours = 0
             ot_rate = 0
 

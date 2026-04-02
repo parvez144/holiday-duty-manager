@@ -6,5 +6,6 @@ echo Starting Attendance Sync...
 start "Attendance Sync" venv\Scripts\python sync_data.py --loop
 
 echo Starting Web Server...
+echo Access the site at: http://127.0.0.1:5100
 venv\Scripts\python serve.py
 pause

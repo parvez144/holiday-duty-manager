@@ -1,10 +1,24 @@
 import sys
 import os
+# Suppress GLib-GIO warnings on Windows (harmless but noisy)
+os.environ['GIO_USE_VFS'] = 'local'
+os.environ['G_MESSAGES_DEBUG'] = 'none'
+
 import errno
 import time
+import signal
 from app import app
 from extensions import db
 from services.attendance_sync import sync_attendance
+
+def is_running(pid):
+    """Check if a process with the given PID is still running."""
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
 
 def init_db():
     """Create the local tables if they don't exist."""
@@ -42,16 +56,28 @@ def run_sync():
         print(f"Sync complete. {count} records added.")
 
 if __name__ == "__main__":
-    # Simple file lock to prevent concurrent syncs
+    # Robust lock mechanism using PID to handle stale locks
     lock_file = "sync.lock"
+    
+    if os.path.exists(lock_file):
+        try:
+            with open(lock_file, "r") as f:
+                old_pid = int(f.read().strip())
+            if is_running(old_pid):
+                print(f"Error: Another synchronization process (PID {old_pid}) is already running.")
+                sys.exit(1)
+            else:
+                print(f"Stale lock found (PID {old_pid} is dead). Overwriting...")
+        except (ValueError, IOError):
+            print("Corrupt lock file found. Overwriting...")
+
     try:
-        # Try to create the lock file exclusively
-        fd = os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            print("Error: Another synchronization process is already running.")
-            sys.exit(1)
-        raise
+        # Create/overwrite the lock file with current PID
+        with open(lock_file, "w") as f:
+            f.write(str(os.getpid()))
+    except Exception as e:
+        print(f"Error creating lock file: {e}")
+        sys.exit(1)
 
     try:
         if len(sys.argv) > 1 and sys.argv[1] == "--init":

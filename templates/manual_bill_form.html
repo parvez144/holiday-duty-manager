@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Bill Form</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+    <style>
+        .form-section {
+            background: rgba(15, 23, 42, 0.4);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .bill-header-inputs {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .bill-header-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+        table input, table textarea {
+            width: 100%;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            outline: none;
+            font-family: inherit;
+        }
+        table input:focus, table textarea:focus {
+            border-bottom: 1px solid var(--primary);
+            background: rgba(15, 23, 42, 0.6);
+        }
+        table input[type="number"] {
+            text-align: right;
+            -moz-appearance: textfield;
+        }
+        table input[type="number"]::-webkit-outer-spin-button,
+        table input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .amount-cell {
+            text-align: right;
+            font-weight: 600;
+        }
+        .btn-add-row {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px dashed #10b981;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.2s;
+        }
+        .btn-add-row:hover {
+            background: rgba(16, 185, 129, 0.2);
+        }
+        .btn-rm-row {
+            color: #ef4444;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .btn-rm-row:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .bill-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .grand-total {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+        .action-bars {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        .autocomplete-results {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        .autocomplete-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.875rem;
+        }
+        .autocomplete-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+        .input-group-relative {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--border);">
+            <div class="logo" style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo" style="height: 40px; width: auto; object-fit: contain;">
+                <span>{{ system.company.name }}</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted);">
+                <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
+            </div>
+        </header>
+
+        <a href="{{ url_for('manual_bill.list_bills') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Bill List
+        </a>
+
+        <h1>{% if bill %}Edit Bill #{{ bill.id }}{% else %}New Manual Bill{% endif %}</h1>
+        <p class="subtitle">Enter the details for the ad-hoc payment voucher.</p>
+
+        <div class="form-section">
+            <div class="bill-header-inputs">
+                <div class="control-group">
+                    <label>Bill Title (e.g. Miscellaneous Loading Work)</label>
+                    <input type="text" id="bill-title" placeholder="Enter title..." required>
+                </div>
+                <div class="control-group">
+                    <label>Date</label>
+                    <input type="date" id="bill-date" value="{{ today }}" required>
+                </div>
+                <div class="control-group">
+                    <label>Prepared By</label>
+                    <input type="text" id="bill-prepared-by" value="{{ current_user.name }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container" style="overflow-x: visible;">
+            <table id="items-table">
+                <thead>
+                    <tr>
+                        <th width="15%">Emp ID</th>
+                        <th width="20%">Name</th>
+                        <th width="15%">Designation</th>
+                        <th width="25%">Description / Duty</th>
+                        <th width="7%">Qty</th>
+                        <th width="8%">Rate</th>
+                        <th width="10%">Amount</th>
+                        <th width="5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="items-body">
+                    <!-- Rows will be added here via JS -->
+                </tbody>
+            </table>
+            <button id="add-row-btn" class="btn-add-row"><i class="fas fa-plus"></i> Add Item Row</button>
+        </div>
+
+        <div class="bill-footer">
+            <div class="grand-total">
+                Total Amount: <span id="grand-total-val">0.00</span>
+            </div>
+        </div>
+
+        <div class="action-bars">
+            <button class="btn-outline" onclick="window.location.href='{{ url_for('manual_bill.list_bills') }}'">Cancel</button>
+            <div style="display: flex; gap: 1rem;">
+                <button id="save-btn" class="btn-primary" onclick="saveBill(false)">
+                    <i class="fas fa-save"></i> Save Bill
+                </button>
+                <button id="save-print-btn" class="btn-outline" onclick="saveBill(true)">
+                    <i class="fas fa-print"></i> Save & Print
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pass server data safely safely to JS -->
+    <script>
+        const INITIAL_BILL_DATA = {{ bill_data_json|safe if bill_data_json else 'null' }};
+        const BILL_ID = {{ bill.id if bill else 'null' }};
+    </script>
+    <script src="{{ url_for('static', filename='js/manual_bill.js') }}"></script>
+</body>
+</html>

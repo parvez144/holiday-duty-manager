@@ -8,9 +8,11 @@ from routes.auth import auth_bp
 from routes.users import users_bp
 from routes.security_payment import security_payment_bp
 from routes.attendance_mgmt import attendance_mgmt_bp
+from routes.manual_bill import manual_bill_bp
 from extensions import db, login_manager
 from models.user import User
 from models.holiday import Holiday, HolidayDutyRecord
+from models.manual_bill import ManualBill, ManualBillItem
 from system_config import system_info, user
 
 app = Flask(__name__)
@@ -48,6 +50,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 app.register_blueprint(security_payment_bp)
 app.register_blueprint(attendance_mgmt_bp)
+app.register_blueprint(manual_bill_bp)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

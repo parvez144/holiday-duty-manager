@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Bill Systems</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename=system.company.logo) }}?v=1.0.2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reports.css') }}">
+    <style>
+        .actions-col {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .btn-edit:hover {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+            transform: translateY(-2px);
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+        .header-actions h1 { margin-top: 0; }
+        .header-actions .subtitle { margin-bottom: 0; }
+        
+        .btn-create-new {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .btn-create-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding: 1rem; background: var(--card-bg); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--border);">
+            <div class="logo"
+                style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 600; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+                <img src="{{ url_for('static', filename=system.company.logo) }}" alt="Logo"
+                    style="height: 40px; width: auto; object-fit: contain;">
+                <span>{{ system.company.name }}</span>
+            </div>
+            <div class="user-profile" style="display: flex; align-items: center; gap: 1rem; color: var(--text-muted);">
+                <span style="font-size: 0.875rem;">{{ current_user.name }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color: var(--text-muted); text-decoration: none;"
+                    title="Logout">
+                    <i class="fas fa-sign-out-alt fa-lg"></i>
+                </a>
+            </div>
+        </header>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+
+        <div class="header-actions">
+            <div>
+                <h1>Manual Bill Systems</h1>
+                <p class="subtitle">Manage ad-hoc and miscellaneous payment vouchers.</p>
+            </div>
+            <a href="{{ url_for('manual_bill.create_bill') }}" class="btn-create-new">
+                <i class="fas fa-plus"></i> Create New Bill
+            </a>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bill ID</th>
+                        <th>Date</th>
+                        <th>Title</th>
+                        <th>Prepared By</th>
+                        <th>Total Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr>
+                        <td>{{ bill.id }}</td>
+                        <td>{{ bill.bill_date.strftime('%d %b %Y') }}</td>
+                        <td>{{ bill.title }}</td>
+                        <td>{{ bill.prepared_by }}</td>
+                        <td style="font-weight: 600; color: #10b981;">{{ "{:.2f}".format(bill.total_amount) }}</td>
+                        <td class="actions-col">
+                            <a href="{{ url_for('manual_bill.pdf_bill', bill_id=bill.id) }}" target="_blank"
+                                class="btn-icon btn-pdf" title="Generate PDF"><i class="fas fa-file-pdf"></i></a>
+                            <a href="{{ url_for('manual_bill.edit_bill', bill_id=bill.id) }}" class="btn-icon btn-edit"
+                                title="Edit Bill"><i class="fas fa-edit"></i></a>
+                            <button onclick="deleteBill({{ bill.id }})" class="btn-icon btn-delete"
+                                title="Delete Bill"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">No manual bills found. Create your first bill!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="app-footer no-print">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; {% if system.copyright.start_year != system.copyright.year %}{{ system.copyright.start_year
+                    }}-{% endif %}{{ system.copyright.year }}
+                    <strong>{{ system.copyright.holder }}</strong>. {{ system.copyright.text }}
+                </div>
+                <div class="developer-info">
+                    {{ system.developer.text }}
+                    <a href="{{ system.developer.website }}" target="_blank"> {{ system.developer.name }}</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        async function deleteBill(id) {
+            if (confirm('Are you sure you want to delete this bill? This action cannot be undone.')) {
+                try {
+                    const res = await fetch(`/manual_bill/delete/${id}`, { method: 'POST' });
+                    const result = await res.json();
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to delete bill.');
+                    }
+                } catch (e) {
+                    alert('Error deleting bill.');
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -125,6 +125,12 @@
         {% endif %}
         {% endwith %}
 
+        <div class="mode-toggle" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <button id="btn-single-mode" class="btn-primary" onclick="setMode('single')" type="button">Single Entry</button>
+            <button id="btn-bulk-mode" class="btn-outline" onclick="setMode('bulk')" type="button">Bulk Missing Punches</button>
+        </div>
+
+        <div id="single-entry-section">
         <div class="controls">
             <form action="{{ url_for('attendance_mgmt.manual_entry') }}" method="POST">
                 <div class="filters-row">
@@ -183,6 +189,70 @@
                     </button>
                 </div>
             </form>
+        </div>
+        </div>
+
+        <div id="bulk-entry-section" style="display: none;">
+            <div class="controls">
+                <div class="filters-row">
+                    <div class="control-group">
+                        <label>Select Date for Missing Punches</label>
+                        <input type="date" id="bulk-date" name="bulk_date" value="{{ today }}" onclick="this.showPicker()">
+                    </div>
+                </div>
+                
+                <div id="bulk-loading" style="display: none; padding: 2rem; text-align: center;">
+                    <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i>
+                    <p style="margin-top: 1rem; color: var(--text-muted);">Fetching missing punches...</p>
+                </div>
+
+                <div id="bulk-results" style="display: none; margin-top: 2rem;">
+                    <div style="background: rgba(15, 23, 42, 0.4); padding: 1rem; border-radius: 1rem; border: 1px solid var(--border); margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="control-group" style="margin: 0; flex: 1; min-width: 250px;">
+                            <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Global Missing In Time (e.g. 08:00 AM)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="time" id="global-in-time" value="08:00" style="flex: 1;">
+                                <button type="button" class="btn-outline" onclick="applyGlobalInTime()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Apply to All</button>
+                            </div>
+                        </div>
+                        <div class="control-group" style="margin: 0; flex: 1; min-width: 250px;">
+                            <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Global Missing Out Time (e.g. 05:00 PM)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="time" id="global-out-time" value="17:00" style="flex: 1;">
+                                <button type="button" class="btn-outline" onclick="applyGlobalOutTime()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Apply to All</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="bulk-form">
+                        <div class="table-container" style="background: rgba(15, 23, 42, 0.4); border-radius: 1rem; border: 1px solid var(--border); padding: 1rem;">
+                            <table style="width: 100%; border-collapse: collapse;" id="bulk-table">
+                                <thead>
+                                    <tr style="text-align: left; border-bottom: 1px solid var(--border);">
+                                        <th style="padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">Employee</th>
+                                        <th style="padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">Status</th>
+                                        <th style="padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">In Time</th>
+                                        <th style="padding: 1rem; color: var(--text-muted); font-size: 0.875rem;">Out Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="btn-group" style="margin-top: 2rem;">
+                            <button type="submit" class="btn-primary" id="btn-save-bulk">
+                                <i class="fas fa-save"></i> Save Bulk Punches
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="bulk-empty" style="display: none; padding: 2rem; text-align: center; color: var(--text-muted);">
+                    <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3; color: #10b981;"></i>
+                    <p>No incomplete punches found for this date.</p>
+                </div>
+            </div>
         </div>
 
         <div class="info-box">
@@ -302,6 +372,165 @@
 
             empSelect.on('change', checkStatus);
             dateInput.on('change', checkStatus);
+
+            // Bulk Mode Logic
+            window.setMode = function(mode) {
+                if (mode === 'single') {
+                    $('#single-entry-section').show();
+                    $('#bulk-entry-section').hide();
+                    $('#btn-single-mode').removeClass('btn-outline').addClass('btn-primary');
+                    $('#btn-bulk-mode').removeClass('btn-primary').addClass('btn-outline');
+                } else {
+                    $('#single-entry-section').hide();
+                    $('#bulk-entry-section').show();
+                    $('#btn-single-mode').removeClass('btn-primary').addClass('btn-outline');
+                    $('#btn-bulk-mode').removeClass('btn-outline').addClass('btn-primary');
+                    fetchMissingPunches();
+                }
+            };
+            
+            window.applyGlobalInTime = function() {
+                const time = $('#global-in-time').val();
+                if (time) {
+                    $('#bulk-table tbody input[name^="in_time_"]').val(time);
+                }
+            };
+            
+            window.applyGlobalOutTime = function() {
+                const time = $('#global-out-time').val();
+                if (time) {
+                    $('#bulk-table tbody input[name^="out_time_"]').val(time);
+                }
+            };
+
+            const bulkDateInput = $('#bulk-date');
+            
+            function fetchMissingPunches() {
+                const date = bulkDateInput.val();
+                if (!date) return;
+                
+                $('#bulk-results').hide();
+                $('#bulk-empty').hide();
+                $('#bulk-loading').show();
+                
+                $.ajax({
+                    url: '/api/attendance/missing',
+                    type: 'GET',
+                    data: { date: date },
+                    success: function(response) {
+                        $('#bulk-loading').hide();
+                        
+                        if (response.length === 0) {
+                            $('#bulk-empty').show();
+                        } else {
+                            const tbody = $('#bulk-table tbody');
+                            tbody.empty();
+                            
+                            response.forEach((item, index) => {
+                                const rowHtml = `
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 1rem;">
+                                            <div style="font-weight: 600;">${item.emp_code} - ${item.emp_name}</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted);">${item.section}</div>
+                                            <input type="hidden" name="emp_code_${index}" value="${item.emp_code}">
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">${item.missing_type}</span>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            ${item.in_time ? 
+                                                `<span style="color: var(--text-muted);">${item.in_time}</span>` : 
+                                                `<input type="time" name="in_time_${index}" style="padding: 0.5rem; border-radius: 0.5rem; background: var(--bg); border: 1px solid var(--border); color: var(--text);">`
+                                            }
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            ${item.out_time ? 
+                                                `<span style="color: var(--text-muted);">${item.out_time}</span>` : 
+                                                `<input type="time" name="out_time_${index}" style="padding: 0.5rem; border-radius: 0.5rem; background: var(--bg); border: 1px solid var(--border); color: var(--text);">`
+                                            }
+                                        </td>
+                                    </tr>
+                                `;
+                                tbody.append(rowHtml);
+                            });
+                            
+                            $('#bulk-results').show();
+                        }
+                    },
+                    error: function(err) {
+                        $('#bulk-loading').hide();
+                        alert('Error fetching data: ' + (err.responseJSON ? err.responseJSON.error : 'Unknown error'));
+                    }
+                });
+            }
+            
+            bulkDateInput.on('change', fetchMissingPunches);
+            
+            $('#bulk-form').on('submit', function(e) {
+                e.preventDefault();
+                const date = bulkDateInput.val();
+                if (!date) return;
+                
+                const inputs = $(this).serializeArray();
+                const btn = $('#btn-save-bulk');
+                btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+                btn.prop('disabled', true);
+                
+                // Group data by index
+                const dataMap = {};
+                inputs.forEach(input => {
+                    const match = input.name.match(/(.+)_(.+)/);
+                    if (match) {
+                        const field = match[1];
+                        const idx = match[2];
+                        if (!dataMap[idx]) dataMap[idx] = {};
+                        dataMap[idx][field] = input.value;
+                    }
+                });
+                
+                // Convert to array
+                const payload = [];
+                for (const idx in dataMap) {
+                    const item = dataMap[idx];
+                    if (item.in_time || item.out_time) {
+                        payload.push({
+                            emp_code: item.emp_code,
+                            date: date,
+                            in_time: item.in_time || null,
+                            out_time: item.out_time || null
+                        });
+                    }
+                }
+                
+                if (payload.length === 0) {
+                    alert('No times were entered.');
+                    btn.html('<i class="fas fa-save"></i> Save Bulk Punches');
+                    btn.prop('disabled', false);
+                    return;
+                }
+                
+                $.ajax({
+                    url: '/attendance/manual/bulk',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            fetchMissingPunches(); // Refresh list
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(err) {
+                        alert('Error saving punches: ' + (err.responseJSON ? err.responseJSON.message : 'Unknown error'));
+                    },
+                    complete: function() {
+                        btn.html('<i class="fas fa-save"></i> Save Bulk Punches');
+                        btn.prop('disabled', false);
+                    }
+                });
+            });
         });
     </script>
 </body>
